@@ -73,8 +73,10 @@ if __name__ == "__main__":
                 # print(model.blocks[0].attention.attention.weight)
                 # input()
 
-        plt.hist(losses, bins=50)
-        plt.show()
+        print(epoch_no)
+        print(sum(losses) / len(losses))
+        # plt.hist(losses, bins=50)
+        # plt.show()
 
         sched.step()
 
