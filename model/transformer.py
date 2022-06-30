@@ -2,7 +2,7 @@ import torch as t
 from einops import rearrange
 import torch.nn.functional as F
 
-class AttentionHeads(t.nn.Module): ## ... prevously called UniModule (?) 
+class AttentionHeads(t.nn.Module):
     def __init__(self, hidden_size, num_heads):
         assert hidden_size % num_heads == 0
         super().__init__()

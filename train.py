@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+from tqdm import tqdm
 import torch as t
 import torch.nn.functional as F
 from dataset.data import ArithmeticDataset, ArithmeticTokenizer, ArithmeticIterator
@@ -45,25 +47,37 @@ if __name__ == "__main__":
     # print() # TODO randomize the symbols; they're not REALLY the indistinguished things
     # input()
 
-    for thing in tdata:
-        print(thing)
-        break
-    # input()
-
-    collect_data = []
-    for thing in a.data[:5]:
-        collect_data.append(thing)
-
-    thing = t.stack(collect_data)
-    print(thing)
-    print(thing.shape)
-
     cross_entropy_loss = t.nn.CrossEntropyLoss()
-    logits = model(thing).logits
-    probabilities = F.softmax(logits, dim=1)
-    
-    
+    opt = t.optim.AdamW(model.parameters(), betas=(0.9, 0.98), weight_decay=1.0)
+    sched = t.optim.lr_scheduler.LinearLR(opt, start_factor=1e-8, total_iters=10)
 
-    # print(logits[0,:])
-    # print(logits.shape, "is the shape")
-    # print()
+    for epoch_no in range(100):
+        i = 0
+        losses = []        
+
+        for x, y in tqdm(tdata):
+            i += 1
+            logits = model(x).logits
+            probabilities = F.softmax(logits, dim=1)
+
+            y_one_hot = F.one_hot(y, num_classes=VOCAB_SIZE).float()
+
+            opt.zero_grad()
+            loss = cross_entropy_loss(probabilities, y_one_hot)
+            losses.append(loss.item())
+            loss.backward()
+            opt.step()
+
+            # if i==10: 
+                # print(probabilities)
+                # print(model.blocks[0].attention.attention.weight)
+                # input()
+
+        plt.hist(losses, bins=50)
+        plt.show()
+
+        sched.step()
+
+            # print(y_one_hot.shape)
+            # print(y_one_hot[0])
+            # break
