@@ -75,6 +75,7 @@ if __name__ == "__main__":
 
         print(epoch_no)
         print(sum(losses) / len(losses))
+
         # plt.hist(losses, bins=50)
         # plt.show()
 
