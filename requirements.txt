@@ -1,0 +1,7 @@
+torch
+matplotlib
+einops
+tqdm
+sympy # ...
+mod
+blobfile
