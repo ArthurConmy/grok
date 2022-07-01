@@ -2,6 +2,7 @@ torch
 matplotlib
 einops
 tqdm
-sympy # ...
+sympy# ...
 mod
 blobfile
+torchtyping
