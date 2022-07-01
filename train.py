@@ -48,12 +48,14 @@ if __name__ == "__main__":
     # input()
 
     cross_entropy_loss = t.nn.CrossEntropyLoss()
-    opt = t.optim.AdamW(model.parameters(), betas=(0.9, 0.98), weight_decay=1.0)
+    opt = t.optim.AdamW(model.parameters(), lr=1e-3, betas=(0.9, 0.98), weight_decay=1.0)
     sched = t.optim.lr_scheduler.LinearLR(opt, start_factor=1e-8, total_iters=10)
 
     for epoch_no in range(100):
         i = 0
         losses = []        
+        corrects = 0
+        total = 0
 
         for x, y in tqdm(tdata):
             i += 1
@@ -61,6 +63,8 @@ if __name__ == "__main__":
             probabilities = F.softmax(logits, dim=1)
 
             y_one_hot = F.one_hot(y, num_classes=VOCAB_SIZE).float()
+            corrects += t.sum((t.argmax(probabilities, dim=1) == y).float())
+            total += min(probabilities.shape[0], y.shape[0])
 
             opt.zero_grad()
             loss = cross_entropy_loss(probabilities, y_one_hot)
@@ -68,13 +72,8 @@ if __name__ == "__main__":
             loss.backward()
             opt.step()
 
-            # if i==10: 
-                # print(probabilities)
-                # print(model.blocks[0].attention.attention.weight)
-                # input()
-
         print(epoch_no)
-        print(sum(losses) / len(losses))
+        print(( 97 * corrects ) / total)
 
         # plt.hist(losses, bins=50)
         # plt.show()
