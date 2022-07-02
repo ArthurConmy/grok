@@ -116,7 +116,7 @@ if __name__ == "__main__":
         )
 
         for x, y in vdata:
-            validation_percent_correct, validation_loss = get_percent_correct(model, x, y)
+            validation_percent_correct, validation_loss = get_validation_data(model, x, y)
 
         lr = sched.get_last_lr()[0]
         # print(type(lr), lr)
