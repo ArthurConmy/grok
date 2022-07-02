@@ -10,17 +10,30 @@ import wandb
 
 DEVICE = "cuda" if t.cuda.is_available() else "cpu"
 VOCAB_SIZE = 119
-MINI_BATCH_SIZE = 128
+MINI_BATCH_SIZE = 512
 
 if __name__ == "__main__":
     model = Transformer(
-        num_layers=2,
-        num_heads=4,
-        vocab_size=VOCAB_SIZE, 
-        hidden_size=128,
-        dropout=0.1,  # TOCHECK
+        num_layers = 2,
+        num_heads = 16,
+        vocab_size = VOCAB_SIZE, 
+        hidden_size = 256,
+        dropout = 0.0,  # TOCHECK
         device = DEVICE,
     )
+    
+    nop = 0
+
+    def list_prod(L):
+        ans = 1
+        for l in L:
+            ans *= l
+        return ans
+
+    for p in model.parameters():
+        nop += list_prod(p.shape)        
+    print(nop, "NUMBER OF PARAMETERS")  
+
     # print(model)
     # print()
     # for thing in (model.parameters()):
@@ -56,13 +69,12 @@ if __name__ == "__main__":
     print(string)
 
     wandb.init(project=f"Arthur's Grok")
-    wandb.run.name = f"AdamW {ctime()}" # wandb.run.id
-    wandb.run.save()
+    wandb.run.name = f"LR 0.0005" # wandb.run.id
 
     cross_entropy_loss = t.nn.CrossEntropyLoss()
-    opt = t.optim.AdamW(model.parameters(), lr=0.0001, weight_decay=0.01) # very fragile to a good learning rate
+    opt = t.optim.AdamW(model.parameters(), lr=0.0005, weight_decay=0.01) # very fragile to a good learning rate
 
-    sched = t.optim.lr_scheduler.LinearLR(opt, start_factor=1e-8, total_iters=100)
+    sched = t.optim.lr_scheduler.LinearLR(opt, start_factor=0.1, total_iters=50)
 
     for epoch_no in range(1000):
         i = 0
@@ -112,7 +124,11 @@ if __name__ == "__main__":
 
         print(epoch_no)
         percentage_correct= ( 100 * corrects.item() ) / total
-        wandb.log({"percentage_correct": percentage_correct})
+        wandb_dict = {
+            "percentage_correct" : percentage_correct,
+            "learning_rate" : sched.get_last_lr(),
+        }
+        wandb.log(wandb_dict)
         # for thing in (model.parameters()):
             # print(thing)
             # print()

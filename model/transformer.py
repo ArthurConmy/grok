@@ -43,8 +43,8 @@ class AttentionHeads(t.nn.Module):
         self.attention = t.nn.Linear(hidden_size, hidden_size * 3, bias=False)
         self.output_proj = t.nn.Linear(hidden_size, hidden_size, bias=False)
 
-        t.nn.init.xavier_uniform_(self.attention.weight)
-        t.nn.init.xavier_uniform_(self.output_proj.weight)
+        t.nn.init.xavier_uniform_(self.attention.weight, gain=1)
+        t.nn.init.xavier_uniform_(self.output_proj.weight, gain=1)
 
     def forward(self, x):
         qkv = self.attention(x)
@@ -76,11 +76,22 @@ class TransformerBlock(t.nn.Module):
         self.layer_norm1 = t.nn.LayerNorm(normalized_shape=hidden_size)
         self.attention = AttentionHeads(hidden_size, num_heads)
         self.layer_norm2 = t.nn.LayerNorm(normalized_shape=hidden_size)
-        self.linear1 = t.nn.Linear(hidden_size, 4 * hidden_size)
-        self.linear2 = t.nn.Linear(4 * hidden_size, hidden_size)
+        self.linear1 = t.nn.Linear(hidden_size, 4 * hidden_size, bias=False)
+        self.linear2 = t.nn.Linear(4 * hidden_size, hidden_size, bias = False)
         self.dropout = t.nn.Dropout(dropout)
 
+        t.nn.init.xavier_uniform_(self.linear1.weight, gain=1)
+        t.nn.init.xavier_uniform_(self.linear2.weight, gain=1)
+        # t.nn.init.xavier_uniform_(self.linear1)
+
     def forward(self, x):
+
+        # x=self.attention(x)
+        # x+=self.dropout(x)
+        # x=self.layer_norm1(x)
+        # x=self.dropout(F.gelu(self.linear1(x)))
+        # return self.layer_norm2(x)
+
         layer_normed_1 = self.layer_norm1(x)
         attentioned = self.attention(layer_normed_1)
         attentioned_x = x + attentioned
