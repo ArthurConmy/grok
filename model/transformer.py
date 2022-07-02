@@ -123,7 +123,7 @@ class PositionalEncoding(t.nn.Module):
             position = t.arange(0, max_len).unsqueeze(0).unsqueeze(2)
             div_term = t.exp(t.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
             pe[0, :, 0::2] = t.sin(position * div_term)
-            pe[0, :, 1::2] = t.cos(position * div_term)
+            pe[0, :, 1::2] = t.c    os(position * div_term)
         else:
             pe = t.zeros(max_len, 1, d_model)
             position = t.arange(0, max_len).unsqueeze(1)
@@ -142,14 +142,13 @@ class PositionalEncoding(t.nn.Module):
             x = x + self.pe[:x.size(0)]
         return self.dropout(x)
 
-class Transformer(t.nn.Module):
+class _Transformer(t.nn.Module):
     def __init__(self, 
         num_layers, 
         num_heads, 
         vocab_size, 
         hidden_size,
         dropout, 
-        device: t.cuda.Device,
     ):
         super().__init__()
       
@@ -211,6 +210,15 @@ class Transformer(t.nn.Module):
         p = (p > 0).float()
         result = t.argmax(p, dim=1).item()
         return result
+
+class _Transformer(t.nn.Module):
+    def __init__(self, 
+        device,
+        **kwargs 
+    ):
+        super().__init__()
+
+        return _Transformer(*kwargs).to(device)
 
 class TransposedLinear(t.nn.Module):
     def __init__(self, model):
