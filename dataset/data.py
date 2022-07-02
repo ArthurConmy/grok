@@ -393,7 +393,6 @@ class ArithmeticIterator(torch.utils.data.IterableDataset):
     def __init__(
         self,
         dataset: ArithmeticDataset,
-        cutoff: int,
         device, # : torch.device,
         batchsize_hint: float = 0,
         shuffle: bool = True,
@@ -409,7 +408,6 @@ class ArithmeticIterator(torch.utils.data.IterableDataset):
         :param shuffle: whether or not to randomly shuffle the dataset
         """
         self.dataset = dataset
-        self.cutoff = cutoff
         self.batchsize = self.calculate_batchsize(
             len(dataset), batchsize_hint=batchsize_hint
         )
@@ -467,8 +465,10 @@ class ArithmeticIterator(torch.utils.data.IterableDataset):
             self.reset_iteration()
             raise StopIteration
         indices = self.permutation[batch_begin : batch_begin + self.batchsize]
-        text = self.dataset.data[indices, :self.cutoff]
-        target = self.dataset.data[indices, self.cutoff]
+        # print("WARNING: overriding default construction of data")
+        text = torch.cat((self.dataset.data[indices, 1:2], self.dataset.data[indices, 3:4]), dim=1)
+        # print(f"text shape: {text.shape}")
+        target = self.dataset.data[indices, 5]
         batch = (text.to(self.device), target.to(self.device))
         self.index += 1
         return batch

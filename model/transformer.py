@@ -3,6 +3,35 @@ import torch as t
 from einops import rearrange
 import torch.nn.functional as F
 
+class PositionalEncoding(t.nn.Module):
+    """ From https://pyt.org/tutorials/beginner/transformer_tutorial.html """
+    def __init__(self, d_model, dropout=0.1, max_len=5000, batch_first=False):
+        super().__init__()
+        self.dropout = t.nn.Dropout(p=dropout)
+        self.batch_first = batch_first
+        
+        if batch_first:
+            pe = t.zeros(1, max_len, d_model)
+            position = t.arange(0, max_len).unsqueeze(0).unsqueeze(2)
+            div_term = t.exp(t.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
+            pe[0, :, 0::2] = t.sin(position * div_term)
+            pe[0, :, 1::2] = t.cos(position * div_term)
+        else:
+            pe = t.zeros(max_len, 1, d_model)
+            position = t.arange(0, max_len).unsqueeze(1)
+            div_term = t.exp(t.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
+            pe[:, 0, 0::2] = t.sin(position * div_term)
+            pe[:, 0, 1::2] = t.cos(position * div_term)
+        self.register_buffer('pe', pe)
+
+    def forward(self, x):
+        if self.batch_first:
+            # print(x.shape, self.pe[:, :x.size(1)].shape)
+            x = x + self.pe[:, :x.size(1)]
+        else:
+            x = x + self.pe[:x.size(0)]
+        return self.dropout(x)
+
 class AttentionHeads(t.nn.Module):
     def __init__(self, hidden_size, num_heads):
         assert hidden_size % num_heads == 0
@@ -11,8 +40,11 @@ class AttentionHeads(t.nn.Module):
         self.num_heads = num_heads
         self.head_size = hidden_size // num_heads
 
-        self.attention = t.nn.Linear(hidden_size, hidden_size * 3)
-        self.output_proj = t.nn.Linear(hidden_size, hidden_size)
+        self.attention = t.nn.Linear(hidden_size, hidden_size * 3, bias=False)
+        self.output_proj = t.nn.Linear(hidden_size, hidden_size, bias=False)
+
+        t.nn.init.xavier_uniform_(self.attention.weight)
+        t.nn.init.xavier_uniform_(self.output_proj.weight)
 
     def forward(self, x):
         qkv = self.attention(x)
@@ -39,12 +71,11 @@ class TransformerBlock(t.nn.Module):
         hidden_size: int, 
         num_heads: int, 
         dropout: float, 
-        layer_norm_epsilon: float
     ):
         super().__init__()
-        self.layer_norm1 = t.nn.LayerNorm(normalized_shape=hidden_size, eps=layer_norm_epsilon)
+        self.layer_norm1 = t.nn.LayerNorm(normalized_shape=hidden_size)
         self.attention = AttentionHeads(hidden_size, num_heads)
-        self.layer_norm2 = t.nn.LayerNorm(normalized_shape=hidden_size, eps=layer_norm_epsilon)
+        self.layer_norm2 = t.nn.LayerNorm(normalized_shape=hidden_size)
         self.linear1 = t.nn.Linear(hidden_size, 4 * hidden_size)
         self.linear2 = t.nn.Linear(4 * hidden_size, hidden_size)
         self.dropout = t.nn.Dropout(dropout)
@@ -71,16 +102,15 @@ class Transformer(t.nn.Module):
         num_heads, 
         vocab_size, 
         hidden_size,
-        max_position_embeddings, 
         dropout, 
-        layer_norm_epsilon,
         device: t.cuda.Device,
     ):
         super().__init__()
       
         self.vocab_size = vocab_size
-        self.token_embedding = t.nn.Parameter(t.randn(vocab_size, hidden_size))
-        self.position_embedding = t.nn.Parameter(t.randn(max_position_embeddings, hidden_size))
+        self.token_embedding = t.nn.Embedding(vocab_size, hidden_size) ## t.nn.Parameter(t.randn(vocab_size, hidden_size))
+        self.position_embedding = t.nn.Parameter(t.randn(3, hidden_size)) # max position embeddings
+        t.nn.init.xavier_uniform_(self.position_embedding)
 
         self.dropout = t.nn.Dropout(dropout)
         self.blocks = t.nn.ModuleList([
@@ -88,11 +118,11 @@ class Transformer(t.nn.Module):
                 hidden_size,
                 num_heads,
                 dropout,
-                layer_norm_epsilon
             ) for _  in range(num_layers)
         ])
         self.token_unembedding = t.nn.Parameter(t.randn(vocab_size, hidden_size))
-        self.layer_norm = t.nn.LayerNorm(normalized_shape=hidden_size, eps=layer_norm_epsilon)
+        t.nn.init.xavier_uniform_(self.token_unembedding)
+        self.layer_norm = t.nn.LayerNorm(normalized_shape=hidden_size)
 
         assert hidden_size % num_heads == 0
         self.hidden_size = hidden_size
@@ -108,7 +138,7 @@ class Transformer(t.nn.Module):
         input_ids
     ): # [batch, seq_len]
         seq_len = input_ids.shape[1]
-        result = self.token_embedding[input_ids] + self.position_embedding[t.arange(seq_len)]
+        result = self.token_embedding(input_ids) + self.position_embedding[t.arange(seq_len)]
         
         result = self.dropout(result)
         for block in self.blocks:
@@ -135,34 +165,6 @@ class Transformer(t.nn.Module):
         result = t.argmax(p, dim=1).item()
         return result
 
-class PositionalEncoding(nn.Module):
-    """ From https://pyt.org/tutorials/beginner/transformer_tutorial.html """
-    def __init__(self, d_model, dropout=0.1, max_len=5000, batch_first=False):
-        super().__init__()
-        self.dropout = t.nn.Dropout(p=dropout)
-        self.batch_first = batch_first
-        
-        if batch_first:
-            pe = t.zeros(1, max_len, d_model)
-            position = t.arange(0, max_len).unsqueeze(0).unsqueeze(2)
-            div_term = t.exp(t.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
-            pe[0, :, 0::2] = t.sin(position * div_term)
-            pe[0, :, 1::2] = t.cos(position * div_term)
-        else:
-            pe = t.zeros(max_len, 1, d_model)
-            position = t.arange(0, max_len).unsqueeze(1)
-            div_term = t.exp(t.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
-            pe[:, 0, 0::2] = t.sin(position * div_term)
-            pe[:, 0, 1::2] = t.cos(position * div_term)
-        self.register_buffer('pe', pe)
-
-    def forward(self, x):
-        if self.batch_first:
-            x = x + self.pe[:, :x.size(1)]
-        else:
-            x = x + self.pe[:x.size(0)]
-        return self.dropout(x)
-
 class TransposedLinear(t.nn.Module):
     def __init__(self, model):
         super().__init__()
@@ -181,14 +183,16 @@ class BabyTransformer(t.nn.Module):
         # num_heads, 
         vocab_size, 
         hidden_size,
-        max_position_embeddings, 
         dropout, 
-        layer_norm_epsilon,
         device: t.cuda.Device,
     ):
+        super().__init__()
+
         self.embedding = t.nn.Embedding(vocab_size, hidden_size)
-        self.pos_encoding = PositionalEncoding(d_model=hidden_size, max_len=5, dropout=dropout, batch_first=False)
-        self.output = TransposedLinear(self.embedding)
+        # self.pos_encoding = PositionalEncoding(d_model=hidden_size, max_len=5, dropout=dropout, batch_first=True)
+        # self.output = TransposedLinear(self.embedding)
+        self.unembedding = t.nn.Linear(hidden_size, vocab_size, bias=False)
 
     def forward(self, x):
-        return self.output(self.embedding(x) + self.pos_encoding(x))
+        return self.unembedding(F.relu(self.embedding(x)))[:,-1,:]
+        # return self.output(self.embedding(x) + self.pos_encoding(x))

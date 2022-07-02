@@ -3,8 +3,10 @@ from tqdm import tqdm
 import torch as t
 import torch.nn.functional as F
 from dataset.data import ArithmeticDataset, ArithmeticTokenizer, ArithmeticIterator
-from model.transformer import Transformer
+from model.transformer import Transformer, BabyTransformer
 from einops import rearrange
+from time import ctime
+import wandb
 
 DEVICE = "cuda" if t.cuda.is_available() else "cpu"
 VOCAB_SIZE = 119
@@ -12,15 +14,12 @@ MINI_BATCH_SIZE = 128
 
 if __name__ == "__main__":
     model = Transformer(
-        num_layers=2, 
-        num_heads=4, 
+        num_layers=2,
+        num_heads=4,
         vocab_size=VOCAB_SIZE, 
         hidden_size=128,
-        max_position_embeddings=10, # TOCHECK ... ? 
         dropout=0.1,  # TOCHECK
-        layer_norm_epsilon=0.1, # TOCHECK
         device = DEVICE,
-        hollow = True,
     )
     # print(model)
     # print()
@@ -39,14 +38,12 @@ if __name__ == "__main__":
         a,
         device = DEVICE,
         batchsize_hint = MINI_BATCH_SIZE,
-        cutoff = 5,
     )
 
     vdata = ArithmeticIterator(
         b,
         device = DEVICE,
         batchsize_hint = MINI_BATCH_SIZE,
-        cutoff = 5,
     )
 
     A = ArithmeticTokenizer()
@@ -55,11 +52,19 @@ if __name__ == "__main__":
     # print() # TODO randomize the symbols; they're not REALLY the indistinguished things
     # input()
 
-    cross_entropy_loss = t.nn.CrossEntropyLoss()
-    opt = t.optim.Adam(model.parameters(), lr=1e-4) # , betas=(0.9, 0.98), weight_decay=1.0)
-    # sched = t.optim.lr_scheduler.LinearLR(opt, start_factor=1e-8, total_iters=10)
+    string = str(ctime()).replace(":", ".")
+    print(string)
 
-    for epoch_no in range(100):
+    wandb.init(project=f"Arthur's Grok")
+    wandb.run.name = f"AdamW {ctime()}" # wandb.run.id
+    wandb.run.save()
+
+    cross_entropy_loss = t.nn.CrossEntropyLoss()
+    opt = t.optim.AdamW(model.parameters(), lr=0.0001, weight_decay=0.01) # very fragile to a good learning rate
+
+    sched = t.optim.lr_scheduler.LinearLR(opt, start_factor=1e-8, total_iters=100)
+
+    for epoch_no in range(1000):
         i = 0
         losses = []        
         corrects = 0
@@ -74,24 +79,26 @@ if __name__ == "__main__":
             a,
             device = DEVICE,
             batchsize_hint = MINI_BATCH_SIZE,
-            cutoff = 5,
         )
 
         for x, y in tqdm(tdata):
             opt.zero_grad()
             i += 1
+
             logits = model(x).logits
-            if i==1:
+            # print(logits.shape)
+            # if i==1:
                 # print("Logits:", logits)
                 # m=t.argmax(logits, dim=1)
                 # print(logits[m])
             probabilities = F.softmax(logits, dim=1)
 
-            if i == 1:
-                print("Probabilities:")
-                print(probabilities)
+            # if i == 1:
+                # print("Probabilities:")
+                # print(probabilities)
                 # m = t.argmax(probabilities, dim=1)
                 # print(m)                
+                # input()
 
             y_one_hot = F.one_hot(y, num_classes=VOCAB_SIZE).float()
             corrects += t.sum((t.argmax(probabilities, dim=1) == y).float())
@@ -101,9 +108,11 @@ if __name__ == "__main__":
             losses.append(loss.item())
             loss.backward()
             opt.step()
+            sched.step()
 
         print(epoch_no)
-        print("Percentage correct:", ( 100 * corrects.item() ) / total)
+        percentage_correct= ( 100 * corrects.item() ) / total
+        wandb.log({"percentage_correct": percentage_correct})
         # for thing in (model.parameters()):
             # print(thing)
             # print()
