@@ -7,9 +7,9 @@ from model.transformer import Transformer, BabyTransformer
 from einops import rearrange
 from time import ctime
 import wandb
+from utils import get_percent_correct, VOCAB_SIZE
 
 DEVICE = "cuda" if t.cuda.is_available() else "cpu"
-VOCAB_SIZE = 119
 MINI_BATCH_SIZE = 512
 
 if __name__ == "__main__":
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     wandb.run.name = f"LR 0.0005" # wandb.run.id
 
     cross_entropy_loss = t.nn.CrossEntropyLoss()
-    opt = t.optim.AdamW(model.parameters(), lr=0.0005, betas=(0.99, 0.9999), weight_decay=1) # very fragile to a good learning rate
+    opt = t.optim.AdamW(model.parameters(), lr=0.0005, weight_decay=1) # very fragile to a good learning rate
 
     sched = t.optim.lr_scheduler.LinearLR(opt, start_factor=0.1, total_iters=50)
 
@@ -98,19 +98,7 @@ if __name__ == "__main__":
             i += 1
 
             logits = model(x).logits
-            # print(logits.shape)
-            # if i==1:
-                # print("Logits:", logits)
-                # m=t.argmax(logits, dim=1)
-                # print(logits[m])
             probabilities = F.softmax(logits, dim=1)
-
-            # if i == 1:
-                # print("Probabilities:")
-                # print(probabilities)
-                # m = t.argmax(probabilities, dim=1)
-                # print(m)                
-                # input()
 
             y_one_hot = F.one_hot(y, num_classes=VOCAB_SIZE).float()
             corrects += t.sum((t.argmax(probabilities, dim=1) == y).float())
@@ -123,18 +111,20 @@ if __name__ == "__main__":
             sched.step()
 
         print(epoch_no)
-        percentage_correct= ( 100 * corrects.item() ) / total
+        training_percentage_correct= ( 100 * corrects.item() ) / total
+
+        vdata = ArithmeticIterator(
+            b,
+            device = DEVICE,
+            batchsize_hint = -1,
+        )
+
+        for x, y in vdata:
+            validation_percent_correct = get_percent_correct(model, x, y)
+
         wandb_dict = {
-            "percentage_correct" : percentage_correct,
+            "percentage_correct" : training_percentage_correct,
+            "validation_percent_correct" : validation_percent_correct,
             "learning_rate" : sched.get_last_lr(),
         }
         wandb.log(wandb_dict)
-        # for thing in (model.parameters()):
-            # print(thing)
-            # print()
-
-        # sched.step()
-
-            # print(y_one_hot.shape)
-            # print(y_one_hot[0])
-            # break
