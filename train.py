@@ -15,7 +15,7 @@ MINI_BATCH_SIZE = 512
 if __name__ == "__main__":
     model = Transformer(
         num_layers = 2,
-        num_heads = 16,
+        num_heads = 32,
         vocab_size = VOCAB_SIZE, 
         hidden_size = 256,
         dropout = 0.0,  # TOCHECK
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     wandb.run.name = f"LR 0.0005" # wandb.run.id
 
     cross_entropy_loss = t.nn.CrossEntropyLoss()
-    opt = t.optim.AdamW(model.parameters(), lr=0.0005, weight_decay=0.01) # very fragile to a good learning rate
+    opt = t.optim.AdamW(model.parameters(), lr=0.0005, betas=(0.99, 0.9999), weight_decay=1) # very fragile to a good learning rate
 
     sched = t.optim.lr_scheduler.LinearLR(opt, start_factor=0.1, total_iters=50)
 
