@@ -123,7 +123,7 @@ class PositionalEncoding(t.nn.Module):
             position = t.arange(0, max_len).unsqueeze(0).unsqueeze(2)
             div_term = t.exp(t.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
             pe[0, :, 0::2] = t.sin(position * div_term)
-            pe[0, :, 1::2] = t.c    os(position * div_term)
+            pe[0, :, 1::2] = t.cos(position * div_term)
         else:
             pe = t.zeros(max_len, 1, d_model)
             position = t.arange(0, max_len).unsqueeze(1)
@@ -176,7 +176,6 @@ class _Transformer(t.nn.Module):
         self.num_layers = num_layers
 
         self.tokenizer = None
-        self.device = device
 
     def forward(
         self, 
@@ -211,14 +210,8 @@ class _Transformer(t.nn.Module):
         result = t.argmax(p, dim=1).item()
         return result
 
-class _Transformer(t.nn.Module):
-    def __init__(self, 
-        device,
-        **kwargs 
-    ):
-        super().__init__()
-
-        return _Transformer(*kwargs).to(device)
+def get_transformer(device, **kwargs):
+        return _Transformer(**kwargs).to(device)
 
 class TransposedLinear(t.nn.Module):
     def __init__(self, model):

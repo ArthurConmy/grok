@@ -3,7 +3,7 @@ from tqdm import tqdm
 import torch as t
 import torch.nn.functional as F
 from dataset.data import ArithmeticDataset, ArithmeticTokenizer, ArithmeticIterator
-from model.transformer import Transformer, BabyTransformer
+from model.transformer import get_transformer, BabyTransformer
 from einops import rearrange
 from time import ctime
 import wandb
@@ -13,7 +13,7 @@ DEVICE = "cuda" if t.cuda.is_available() else "cpu"
 MINI_BATCH_SIZE = 512
 
 if __name__ == "__main__":
-    model = Transformer(
+    model = get_transformer(
         num_layers = 2,
         num_heads = 32,
         vocab_size = VOCAB_SIZE, 
@@ -33,14 +33,6 @@ if __name__ == "__main__":
     for p in model.parameters():
         nop += list_prod(p.shape)        
     print(nop, "NUMBER OF PARAMETERS")  
-
-    # print(model)
-    # print()
-    # for thing in (model.parameters()):
-        # print(thing)
-        # print()
-    # print()
-    # input()
 
     a, b = ArithmeticDataset.splits(
         train_pct = 75, 
