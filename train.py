@@ -65,8 +65,9 @@ if __name__ == "__main__":
 
     cross_entropy_loss = t.nn.CrossEntropyLoss()
     opt = t.optim.AdamW(model.parameters(), lr=0.0005, weight_decay=1) # very fragile to a good learning rate
-
-    sched = t.optim.lr_scheduler.LinearLR(opt, start_factor=0.1, total_iters=50)
+    # sched = t.optim.lr_scheduler.LinearLR(opt, start_factor=0.1, total_iters=50)
+    sched = t.optim.swa_utils.SWALR(opt, anneal_strategy="linear", anneal_epochs=100, swa_lr=0.0001)
+    is_greater_than_ninety = False
 
     for epoch_no in range(1000):
         i = 0
@@ -100,10 +101,13 @@ if __name__ == "__main__":
             losses.append(loss.item())
             loss.backward()
             opt.step()
-            # sched.step()
 
         print(epoch_no)
-        training_percentage_correct= ( 100 * corrects.item() ) / total
+        training_percentage_correct = ( 100 * corrects.item() ) / total
+
+        if training_percentage_correct > 95 and not is_greater_than_ninety or is_greater_than_ninety:
+            is_greater_than_ninety = True
+            sched.step()
 
         vdata = ArithmeticIterator(
             b,
@@ -114,9 +118,12 @@ if __name__ == "__main__":
         for x, y in vdata:
             validation_percent_correct = get_percent_correct(model, x, y)
 
+        lr = sched.get_last_lr()[0]
+        # print(type(lr), lr)
+
         wandb_dict = {
             "percentage_correct" : training_percentage_correct,
             "validation_percent_correct" : validation_percent_correct,
-            "learning_rate" : sched.get_last_lr(),
+            "lr" : lr,
         }
         wandb.log(wandb_dict)
