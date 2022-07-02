@@ -7,7 +7,7 @@ from model.transformer import get_transformer, BabyTransformer
 from einops import rearrange
 from time import ctime
 import wandb
-from utils import get_percent_correct, VOCAB_SIZE
+from utils import get_validation_data, VOCAB_SIZE
 
 DEVICE = "cuda" if t.cuda.is_available() else "cpu"
 MINI_BATCH_SIZE = 512
@@ -116,14 +116,16 @@ if __name__ == "__main__":
         )
 
         for x, y in vdata:
-            validation_percent_correct = get_percent_correct(model, x, y)
+            validation_percent_correct, validation_loss = get_percent_correct(model, x, y)
 
         lr = sched.get_last_lr()[0]
         # print(type(lr), lr)
 
         wandb_dict = {
             "percentage_correct" : training_percentage_correct,
+            "training_loss" : sum(losses) / len(losses),
             "validation_percent_correct" : validation_percent_correct,
+            "validation_loss" : validation_loss,
             "lr" : lr,
         }
         wandb.log(wandb_dict)
