@@ -100,7 +100,7 @@ if __name__ == "__main__":
             losses.append(loss.item())
             loss.backward()
             opt.step()
-            sched.step()
+            # sched.step()
 
         print(epoch_no)
         training_percentage_correct= ( 100 * corrects.item() ) / total
