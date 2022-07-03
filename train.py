@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from dataset.data import ArithmeticDataset, ArithmeticTokenizer, ArithmeticIterator, get_the_data
 from model.transformer import get_transformer, BabyTransformer
 from einops import rearrange
-from time import ctime
+from time import ctime, perf_counter
 import wandb
 from utils import get_validation_data, get_no_parameters, VOCAB_SIZE, safe_dtime
 
@@ -31,6 +31,7 @@ def complete_run(
     wandb.init(project=project_name, reinit=True)
     wandb.run.name = run_name
     print(f"Starting run {run_name}")
+    initial_time = perf_counter()
 
     model = model_function(**model_config)
     get_no_parameters(model)
@@ -89,6 +90,7 @@ def complete_run(
             "lr" : lr,
         }
         wandb.log(wandb_dict)
+    wandb.run.name = run_name + " that took " + str(int(perf_counter() - initial_time))
     wandb.run.finish()
 
 if __name__ == "__main__":
@@ -113,7 +115,7 @@ if __name__ == "__main__":
         "mini_batch_size" : MINI_BATCH_SIZE,
         "lr" : 0.0005,
         "weight_decay" : 1,
-        "no_epochs" : 5,
+        "no_epochs" : 1000,
     }
 
     wandb.init(project=f"Arthur's Grok", reinit=True)
