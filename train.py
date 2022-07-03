@@ -78,8 +78,13 @@ def complete_run(
         losses = []        
         corrects = 0
         total = 0
+        first = True
 
         for x, y in train_data:
+            if first:
+                print(x) # 25 45 (88 69?)
+                first = False
+
             opt.zero_grad()
             i += 1
 

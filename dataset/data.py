@@ -489,7 +489,7 @@ def get_the_data(
     raw_train_data, raw_valid_data = ArithmeticDataset.splits(
         train_pct = 100 * train_proportion, 
         operator = operator,
-        shuffle = False,
+        shuffle = True, # important it's true as otherwise things are structured
     )
 
     train_data = ArithmeticIterator(

@@ -18,5 +18,7 @@ for _ in range(10):
 
     for data in [train_data, valid_data]:    
         for x, y in data:
+            print(x)
             percent, loss = get_percent_and_loss(transformer, x, y)
             print(percent, loss)
+
