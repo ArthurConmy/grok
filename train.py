@@ -82,7 +82,7 @@ def complete_run(
 
         for x, y in train_data:
             if first:
-                print(x) # 25 45 (88 69?)
+                # print(x) # 25 45 (88 69?)
                 first = False
 
             opt.zero_grad()
@@ -115,7 +115,7 @@ def complete_run(
 
         if not val_is_greater and validation_percent_correct > 95:
             val_is_greater = True
-            t.save(f"checkpoints/val_is_greater_{ctime()}.pt")
+            t.save(model.state_dict(), f"checkpoints/val_is_greater_{ctime()}.pt")
 
         lr = sched.get_last_lr()[0]
         wandb_dict = {
