@@ -1,5 +1,6 @@
 import torch as t
 import torch.nn.functional as F
+from time import ctime
 VOCAB_SIZE = 119
 
 def list_prod(L):
@@ -19,6 +20,8 @@ def get_no_parameters(model):
         nop += list_prod(p.shape)        
     print("NUMBER OF PARAMETERS", nop)  
 
+def safe_dtime():
+    return str(ctime()).replace(":", ".")
 
 def get_validation_data(model, x, y):
     with t.no_grad():
