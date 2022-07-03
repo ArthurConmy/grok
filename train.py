@@ -9,6 +9,7 @@ from time import ctime, perf_counter
 import wandb
 from utils import get_percent_and_loss, get_no_parameters, VOCAB_SIZE, safe_dtime
 
+PROJECT_NAME = "Arthur's Grok 2"
 DEVICE = "cuda" if t.cuda.is_available() else "cpu"
 MINI_BATCH_SIZE = 512
 DEFAULT_MODEL_CONFIG = {
@@ -20,7 +21,7 @@ DEFAULT_MODEL_CONFIG = {
     "device" : DEVICE,
 }
 DEFAULT_RUN_CONFIG = {
-    "project_name" : "Arthur's Grok",
+    "project_name" : PROJECT_NAME,
     "run_name" : f"Run at {safe_dtime()}",
     "model_function" : get_transformer,
     "model_config" : DEFAULT_MODEL_CONFIG,
@@ -105,10 +106,10 @@ def complete_run(
 
         lr = sched.get_last_lr()[0]
         wandb_dict = {
-            "percentage_correct" : training_percentage_correct,
-            "training_loss" : sum(losses) / len(losses),
-            "validation_percent_correct" : validation_percent_correct,
-            "validation_loss" : validation_loss,
+            "training_accuracy" : train_prop,
+            "training_loss" : train_loss,
+            "validation_accuracy" : valid_prop,
+            "validation_loss" : valid_loss,
             "lr" : lr,
         }
         wandb.log(wandb_dict)
@@ -116,7 +117,7 @@ def complete_run(
     wandb.run.finish()
 
 if __name__ == "__main__":    
-    wandb.init(project=f"Arthur's Grok", reinit=True)
+    wandb.init(project=PROJECT_NAME, reinit=True)
 
     for num_heads in [128]:
         model_config = dict(DEFAULT_MODEL_CONFIG)
