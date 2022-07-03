@@ -67,6 +67,8 @@ def complete_run(
     train_is_greater = False
     val_is_greater = False
 
+    print("Initial", model.state_dict())
+
     for epoch_no in tqdm(range(epochs)):
         train_data, _ = get_the_data(
             operator = operator,
@@ -102,7 +104,8 @@ def complete_run(
             train_is_greater = True
             sched.step()
 
-        train_prop, train_loss, valid_prop, valid_loss = get_metrics(model, operator, train_proportion, device)
+        print(model.state_dict(), "state dict")
+        train_prop, train_loss, valid_prop, valid_loss, xs = get_metrics(model, operator, train_proportion, device)
 
         lr = sched.get_last_lr()[0]
         wandb_dict = {
@@ -113,6 +116,13 @@ def complete_run(
             "lr" : lr,
         }
         wandb.log(wandb_dict)
+
+
+        if epoch_no == 1:
+            print(train_prop, valid_prop)
+            t.save(model.state_dict(), "ep1.pt")
+            input()
+
     wandb.run.name = run_name + " that took " + str(int(perf_counter() - initial_time))
     wandb.run.finish()
 

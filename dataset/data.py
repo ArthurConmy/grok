@@ -345,6 +345,7 @@ class ArithmeticDataset:
             data = cls._make_unary_operation_data(operator, operands)
 
         rng = np.random.RandomState(seed=seed)
+        # print(rng.get_state(), "is the state")        
         if shuffle:
             rng.shuffle(data)
 
@@ -511,7 +512,7 @@ def get_the_data(
     return train_data, valid_data
 
 def get_metrics(model, operator, train_proportion, device):
-
+    print(train_proportion)
     train_data, valid_data = get_the_data(
         operator = operator,
         train_proportion = train_proportion,
@@ -519,15 +520,18 @@ def get_metrics(model, operator, train_proportion, device):
         device = device,
     )
 
-    with torch.no_grad():
-        first = True
-        for x, y in train_data:
-            train_prop, train_loss = get_percent_and_loss(model, x, y)
-            assert first
-            first = False
+    stored_x = None
+    first = True
 
-        for x, y in valid_data:
-            valid_prop, valid_loss = get_percent_and_loss(model, x, y)
+    for x, y in train_data:
+        train_prop, train_loss = get_percent_and_loss(model, x, y)
+        assert first
+        first = False
+        stored_x = x.clone()
+
+    for x, y in valid_data:
+        print(y)
+        valid_prop, valid_loss = get_percent_and_loss(model, x, y)
 
     return train_prop, train_loss, valid_prop, valid_loss
 

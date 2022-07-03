@@ -151,7 +151,7 @@ class Transformer(t.nn.Module):
         dropout, 
     ):
         super().__init__()
-      
+        t.manual_seed(0) 
         self.vocab_size = vocab_size
         self.token_embedding = t.nn.Embedding(vocab_size, hidden_size) ## t.nn.Parameter(t.randn(vocab_size, hidden_size))
         self.position_embedding = PositionalEncoding(hidden_size, dropout-dropout, max_len=2, batch_first=True) ## t.nn.Parameter(t.randn(3, hidden_size)) # max position embeddings

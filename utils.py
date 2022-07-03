@@ -35,4 +35,4 @@ def get_percent_and_loss(model, x, y):
         loss = cross_entropy_loss(probabilities, y_one_hot)
 
         assert probabilities.shape[0] == y.shape[0]
-        return (100 * corrects) / probabilities.shape[0], loss
+        return corrects / probabilities.shape[0], loss
