@@ -102,16 +102,26 @@ def complete_run(
 
         training_percentage_correct = ( 100 * corrects.item() ) / total
 
-        if training_percentage_correct > 95 and not train_is_greater or train_is_greater:
+        if training_percentage_correct > 99.99 and not train_is_greater or train_is_greater:
 
             if not train_is_greater:
-                t.save(model.state_dict(), f"checkpoints/first_greater_than_90_{ctime()}.pt")
+                t.save(model.state_dict(), f"checkpoints/first_greater_than_9_{ctime()}.pt")
 
             train_is_greater = True
             sched.step()
 
+        val_total = 0
+        val_total_correct = 0
+        val_first = True
+
         for x, y in valid_data:
+            if val_first:
+                val_first = False
+                print(x)
             validation_percent_correct, validation_loss = get_percent_and_loss(model, x, y)
+            val_total_correct = (validation_percent_correct / 100) * x.shape[0]
+            val_total += x.shape[0]
+        validation_percent_correct = (val_total_correct * 100) / val_total
 
         if not val_is_greater and validation_percent_correct > 95:
             val_is_greater = True
