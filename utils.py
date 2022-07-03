@@ -2,6 +2,23 @@ import torch as t
 import torch.nn.functional as F
 VOCAB_SIZE = 119
 
+def list_prod(L):
+    ans = 1
+    for l in L:
+        ans *= l
+    return ans
+
+def get_no_parameters(model):
+    nop = 0
+    def list_prod(L):
+        ans = 1
+        for l in L:
+            ans *= l
+        return ans
+    for p in model.parameters():
+        nop += list_prod(p.shape)        
+    print("NUMBER OF PARAMETERS", nop)  
+
 
 def get_validation_data(model, x, y):
     with t.no_grad():

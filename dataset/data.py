@@ -479,6 +479,33 @@ class ArithmeticIterator(torch.utils.data.IterableDataset):
         """
         return math.ceil(len(self.dataset) / self.batchsize)
 
+def get_the_data(
+    operator,
+    train_proportion,
+    mini_batch_size,
+    device,
+):
+    raw_train_data, raw_valid_data = ArithmeticDataset.splits(
+        train_pct = 100 * train_proportion, 
+        operator = operator,
+    )
+
+    train_data = ArithmeticIterator(
+        raw_train_data,
+        device = device,
+        batchsize_hint = mini_batch_size,
+        shuffle = False,
+    )
+    
+    valid_data = ArithmeticIterator(
+        raw_valid_data,
+        device = device,
+        batchsize_hint = mini_batch_size,
+        shuffle = False,
+    )
+
+    return train_data, valid_data
+
 if __name__ == "__main__":
     print("Hello, data.py!")
     a, b = ArithmeticDataset.splits(

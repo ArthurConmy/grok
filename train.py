@@ -1,13 +1,14 @@
+from tracemalloc import get_traceback_limit
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import torch as t
 import torch.nn.functional as F
-from dataset.data import ArithmeticDataset, ArithmeticTokenizer, ArithmeticIterator
+from dataset.data import ArithmeticDataset, ArithmeticTokenizer, ArithmeticIterator, get_the_data
 from model.transformer import get_transformer, BabyTransformer
 from einops import rearrange
 from time import ctime
 import wandb
-from utils import get_validation_data, VOCAB_SIZE
+from utils import get_validation_data, get_no_parameters, VOCAB_SIZE
 
 DEVICE = "cuda" if t.cuda.is_available() else "cpu"
 MINI_BATCH_SIZE = 512
@@ -15,89 +16,40 @@ MINI_BATCH_SIZE = 512
 def complete_run(
     model_function,
     model_config,
-    
+    operator,
+    train_proportion,    
+    device,
+    mini_batch_size,
+    lr, # 0.0005
+    weight_decay,
 ):
+    if "device" in model_config:
+        assert model_config["device"] == device, f"{model_config['device']} != {device}"
+
     model = model_function(**model_config)
-
-
-
-if __name__ == "__main__":
-
-    model_config = {
-        "num_layers" : 2,
-        "num_heads" : 32,
-        "vocab_size" : VOCAB_SIZE, 
-        "hidden_size" : 256,
-        "dropout" : 0.0, 
-        "device" : DEVICE,
-    }
-    
-    complete_run(get_transformer, model_config)
-    input("My input")
-
-    nop = 0
-    def list_prod(L):
-        ans = 1
-        for l in L:
-            ans *= l
-        return ans
-    for p in model.parameters():
-        nop += list_prod(p.shape)        
-    print(nop, "NUMBER OF PARAMETERS")  
-
-    a, b = ArithmeticDataset.splits(
-        train_pct = 75, 
-        operator = "+",
-    )
-
-    tdata = ArithmeticIterator(
-        a,
-        device = DEVICE,
-        batchsize_hint = MINI_BATCH_SIZE,
-    )
-
-    vdata = ArithmeticIterator(
-        b,
-        device = DEVICE,
-        batchsize_hint = MINI_BATCH_SIZE,
-    )
-
-    A = ArithmeticTokenizer()
-    # tens = t.range(start=0, end=120).float()
-    # print(A.decode(tens))
-    # print() # TODO randomize the symbols; they're not REALLY the indistinguished things
-    # input()
-
-    string = str(ctime()).replace(":", ".")
-    print(string)
-
-    wandb.init(project=f"Arthur's Grok")
-    wandb.run.name = f"LR 0.0005" # wandb.run.id
+    get_no_parameters(model)
 
     cross_entropy_loss = t.nn.CrossEntropyLoss()
-    opt = t.optim.AdamW(model.parameters(), lr=0.0005, weight_decay=1) # very fragile to a good learning rate
-    # sched = t.optim.lr_scheduler.LinearLR(opt, start_factor=0.1, total_iters=50)
+    opt = t.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay) 
+    
     sched = t.optim.swa_utils.SWALR(opt, anneal_strategy="linear", anneal_epochs=100, swa_lr=0.0001)
     is_greater_than_ninety = False
 
     for epoch_no in range(1000):
+
+        train_data, valid_data = get_the_data(
+            operator = operator,
+            train_proportion = train_proportion,
+            mini_batch_size = mini_batch_size,
+            device = device,
+        )
+
         i = 0
         losses = []        
         corrects = 0
         total = 0
 
-        a, b = ArithmeticDataset.splits(
-            train_pct = 75, 
-            operator = "+",
-        )
-
-        tdata = ArithmeticIterator(
-            a,
-            device = DEVICE,
-            batchsize_hint = MINI_BATCH_SIZE,
-        )
-
-        for x, y in tqdm(tdata):
+        for x, y in train_data: # TODO
             opt.zero_grad()
             i += 1
 
@@ -120,13 +72,7 @@ if __name__ == "__main__":
             is_greater_than_ninety = True
             sched.step()
 
-        vdata = ArithmeticIterator(
-            b,
-            device = DEVICE,
-            batchsize_hint = -1,
-        )
-
-        for x, y in vdata:
+        for x, y in valid_data:
             validation_percent_correct, validation_loss = get_validation_data(model, x, y)
 
         lr = sched.get_last_lr()[0]
@@ -140,3 +86,35 @@ if __name__ == "__main__":
             "lr" : lr,
         }
         wandb.log(wandb_dict)
+
+if __name__ == "__main__":
+    model_config = {
+        "num_layers" : 2,
+        "num_heads" : 32,
+        "vocab_size" : VOCAB_SIZE, 
+        "hidden_size" : 256,
+        "dropout" : 0.0, 
+        "device" : DEVICE,
+    }
+    
+    wandb.init(project=f"Arthur's Grok")
+    wandb.run.name = f"LR 0.0005" # wandb.run.id
+   
+    complete_run(
+        get_transformer,
+        model_config,
+        operator = "+",
+        train_proportion = 0.75,    
+        device = DEVICE,
+        mini_batch_size = MINI_BATCH_SIZE,
+        lr = 0.0005,
+        weight_decay = 1.0,
+    )
+
+    A = ArithmeticTokenizer()
+    # tens = t.range(start=0, end=120).float()
+    # print(A.decode(tens))
+    # print() # TODO randomize the symbols; they're not REALLY the indistinguished things
+    # input()
+    # string = str(ctime()).replace(":", ".")
+    # print(string)
