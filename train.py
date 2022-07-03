@@ -9,7 +9,7 @@ from time import ctime, perf_counter, strftime
 import wandb
 from utils import get_percent_and_loss, get_no_parameters, VOCAB_SIZE, num_time, safe_dtime
 
-PROJECT_NAME = "Arthur's Grok 2"
+PROJECT_NAME = "Arthur's Grok 3"
 DEVICE = "cuda" if t.cuda.is_available() else "cpu"
 MINI_BATCH_SIZE = 512
 DEFAULT_MODEL_CONFIG = {
@@ -106,13 +106,13 @@ def complete_run(
 
         if train_prop > 0.95 and not train_is_greater: 
             train_is_greater = True
-            t.save(model.state_dict(), f"train_90_{num_time()}.pt")
+            t.save(model.state_dict(), f"checkpoints/train_90_{num_time()}.pt")
         if train_is_greater:
             sched.step()
 
-        if valid_prop > 0.8 and not valid_is_greater:
-            valid_is_greater = True
-            t.save(model.state_dict(), f"valid_90_{num_time()}.pt")
+        if valid_prop > 0.8 and not val_is_greater:
+            val_is_greater = True
+            t.save(model.state_dict(), f"checkpoints/valid_90_{num_time()}.pt")
 
         lr = sched.get_last_lr()[0]
         wandb_dict = {
