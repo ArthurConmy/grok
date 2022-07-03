@@ -15,6 +15,8 @@ from mod import Mod
 
 import blobfile as bf
 
+from utils import get_percent_and_loss
+
 
 VALID_OPERATORS = {
     "+": "addition",
@@ -507,6 +509,27 @@ def get_the_data(
     )
 
     return train_data, valid_data
+
+def get_metrics(model, operator, train_proportion, device):
+
+    train_data, valid_data = get_the_data(
+        operator = operator,
+        train_proportion = train_proportion,
+        mini_batch_size = -1,
+        device = device,
+    )
+
+    with torch.no_grad():
+        first = True
+        for x, y in train_data:
+            train_prop, train_loss = get_percent_and_loss(model, x, y)
+            assert first
+            first = False
+
+        for x, y in valid_data:
+            valid_prop, valid_loss = get_percent_and_loss(model, x, y)
+
+    return train_prop, train_loss, valid_prop, valid_loss
 
 if __name__ == "__main__":
     print("Hello, data.py!")

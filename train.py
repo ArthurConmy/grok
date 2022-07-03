@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import torch as t
 import torch.nn.functional as F
-from dataset.data import ArithmeticDataset, ArithmeticTokenizer, ArithmeticIterator, get_the_data
+from dataset.data import ArithmeticDataset, ArithmeticTokenizer, ArithmeticIterator, get_the_data, get_metrics
 from model.transformer import get_transformer, BabyTransformer
 from einops import rearrange
 from time import ctime, perf_counter
@@ -30,7 +30,7 @@ DEFAULT_RUN_CONFIG = {
     "mini_batch_size" : MINI_BATCH_SIZE,
     "lr" : 0.0005,
     "weight_decay" : 1,
-    "no_epochs" : 1000,
+    "epochs" : 1000,
     "save_models" : False,
 }
 
@@ -45,7 +45,7 @@ def complete_run(
     mini_batch_size,
     lr,
     weight_decay,
-    no_epochs,
+    epochs,
     save_models,
 ):    
     if "device" in model_config:
@@ -66,8 +66,8 @@ def complete_run(
     train_is_greater = False
     val_is_greater = False
 
-    for epoch_no in tqdm(range(no_epochs)):
-        train_data, valid_data = get_the_data(
+    for epoch_no in tqdm(range(epochs)):
+        train_data, _ = get_the_data(
             operator = operator,
             train_proportion = train_proportion,
             mini_batch_size = mini_batch_size,
@@ -78,13 +78,8 @@ def complete_run(
         losses = []        
         corrects = 0
         total = 0
-        first = True
 
         for x, y in train_data:
-            if first:
-                # print(x) # 25 45 (88 69?)
-                first = False
-
             opt.zero_grad()
             i += 1
 
@@ -102,30 +97,11 @@ def complete_run(
 
         training_percentage_correct = ( 100 * corrects.item() ) / total
 
-        if training_percentage_correct > 99.99 and not train_is_greater or train_is_greater:
-
-            if not train_is_greater:
-                t.save(model.state_dict(), f"checkpoints/first_greater_than_9_{ctime()}.pt")
-
+        if training_percentage_correct >0 and not train_is_greater or train_is_greater:
             train_is_greater = True
             sched.step()
 
-        val_total = 0
-        val_total_correct = 0
-        val_first = True
-
-        for x, y in valid_data:
-            if val_first:
-                val_first = False
-                print(x)
-            validation_percent_correct, validation_loss = get_percent_and_loss(model, x, y)
-            val_total_correct = (validation_percent_correct / 100) * x.shape[0]
-            val_total += x.shape[0]
-        validation_percent_correct = (val_total_correct * 100) / val_total
-
-        if not val_is_greater and validation_percent_correct > 95:
-            val_is_greater = True
-            t.save(model.state_dict(), f"checkpoints/val_is_greater_{ctime()}.pt")
+        train_prop, train_loss, valid_prop, valid_loss = get_metrics(model, operator, train_proportion, device)
 
         lr = sched.get_last_lr()[0]
         wandb_dict = {
@@ -142,7 +118,7 @@ def complete_run(
 if __name__ == "__main__":    
     wandb.init(project=f"Arthur's Grok", reinit=True)
 
-    for num_heads in [128, 32, 128, 32, 128]:
+    for num_heads in [128]:
         model_config = dict(DEFAULT_MODEL_CONFIG)
         model_config["num_heads"] = num_heads
 
@@ -150,6 +126,7 @@ if __name__ == "__main__":
         run_config["model_config"] = model_config
         run_config["run_name"] = f"{num_heads} heads"
         run_config["save_models"] = True
+        run_config["epochs"] = 10
 
         complete_run(**run_config)
     A = ArithmeticTokenizer()

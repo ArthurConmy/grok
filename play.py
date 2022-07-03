@@ -6,7 +6,7 @@ from train import MINI_BATCH_SIZE, DEVICE
 from utils import get_percent_and_loss
 
 transformer = get_transformer(**DEFAULT_MODEL_CONFIG)
-transformer.load_state_dict(t.load("anotherv_90.pt", map_location=t.device("cpu")))
+transformer.load_state_dict(t.load("spice.pt", map_location=t.device("cpu"))) # spice is a good training data thing
 
 for _ in range(10):
     train_data, valid_data = get_the_data(
@@ -16,13 +16,14 @@ for _ in range(10):
         device = DEVICE,
     )
 
-    for data in [train_data, valid_data]:    
-        for x, y in data:
-            # x = x[:50]
-            # y = y[:50]
-            percent, loss = get_percent_and_loss(transformer, x, y)
-            print(percent, loss)
-            input()
+    t2, v2 = get_the_data(
+        operator = "+",
+        train_proportion = 0.75,
+        mini_batch_size = -1,
+        device = DEVICE,
+    )
+
+    for x, y in t2:
+        print(x)
 
     break
-
