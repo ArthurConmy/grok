@@ -5,9 +5,9 @@ import torch.nn.functional as F
 from dataset.data import ArithmeticDataset, ArithmeticTokenizer, ArithmeticIterator, get_the_data, get_metrics
 from model.transformer import get_transformer, BabyTransformer
 from einops import rearrange
-from time import ctime, perf_counter
+from time import ctime, perf_counter, strftime
 import wandb
-from utils import get_percent_and_loss, get_no_parameters, VOCAB_SIZE, safe_dtime
+from utils import get_percent_and_loss, get_no_parameters, VOCAB_SIZE, num_time, safe_dtime
 
 PROJECT_NAME = "Arthur's Grok 2"
 DEVICE = "cuda" if t.cuda.is_available() else "cpu"
@@ -67,8 +67,6 @@ def complete_run(
     train_is_greater = False
     val_is_greater = False
 
-    print("Initial", model.state_dict())
-
     for epoch_no in tqdm(range(epochs)):
         train_data, _ = get_the_data(
             operator = operator,
@@ -100,12 +98,21 @@ def complete_run(
 
         training_percentage_correct = ( 100 * corrects.item() ) / total
 
-        if training_percentage_correct >0 and not train_is_greater or train_is_greater:
+        # if training_percentage_correct>90 and not train_is_greater or train_is_greater:
+        #     train_is_greater = True
+        #     sched.step()
+
+        train_prop, train_loss, valid_prop, valid_loss = get_metrics(model, operator, train_proportion, device)
+
+        if train_prop > 0.95 and not train_is_greater: 
             train_is_greater = True
+            t.save(model.state_dict(), f"train_90_{num_time()}.pt")
+        if train_is_greater:
             sched.step()
 
-        print(model.state_dict(), "state dict")
-        train_prop, train_loss, valid_prop, valid_loss, xs = get_metrics(model, operator, train_proportion, device)
+        if valid_prop > 0.8 and not valid_is_greater:
+            valid_is_greater = True
+            t.save(model.state_dict(), f"valid_90_{num_time()}.pt")
 
         lr = sched.get_last_lr()[0]
         wandb_dict = {
@@ -117,18 +124,10 @@ def complete_run(
         }
         wandb.log(wandb_dict)
 
-
-        if epoch_no == 1:
-            print(train_prop, valid_prop)
-            t.save(model.state_dict(), "ep1.pt")
-            input()
-
     wandb.run.name = run_name + " that took " + str(int(perf_counter() - initial_time))
     wandb.run.finish()
 
 if __name__ == "__main__":    
-    wandb.init(project=PROJECT_NAME, reinit=True)
-
     for num_heads in [128]:
         model_config = dict(DEFAULT_MODEL_CONFIG)
         model_config["num_heads"] = num_heads
@@ -140,6 +139,7 @@ if __name__ == "__main__":
         run_config["epochs"] = 10
 
         complete_run(**run_config)
+
     A = ArithmeticTokenizer()
     # tens = t.range(start=0, end=120).float()
     # print(A.decode(tens))

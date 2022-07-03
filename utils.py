@@ -1,6 +1,6 @@
 import torch as t
 import torch.nn.functional as F
-from time import ctime
+from time import ctime, strftime
 VOCAB_SIZE = 119
 
 def list_prod(L):
@@ -22,6 +22,9 @@ def get_no_parameters(model):
 
 def safe_dtime():
     return str(ctime()).replace(":", ".")
+
+def num_time():
+    return strftime("%H%M%S")
 
 def get_percent_and_loss(model, x, y):
     with t.no_grad():

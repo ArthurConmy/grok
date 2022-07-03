@@ -512,7 +512,6 @@ def get_the_data(
     return train_data, valid_data
 
 def get_metrics(model, operator, train_proportion, device):
-    print(train_proportion)
     train_data, valid_data = get_the_data(
         operator = operator,
         train_proportion = train_proportion,
@@ -530,7 +529,6 @@ def get_metrics(model, operator, train_proportion, device):
         stored_x = x.clone()
 
     for x, y in valid_data:
-        print(y)
         valid_prop, valid_loss = get_percent_and_loss(model, x, y)
 
     return train_prop, train_loss, valid_prop, valid_loss
