@@ -12,24 +12,35 @@ from utils import get_validation_data, VOCAB_SIZE
 DEVICE = "cuda" if t.cuda.is_available() else "cpu"
 MINI_BATCH_SIZE = 512
 
-if __name__ == "__main__":
-    model = get_transformer(
-        num_layers = 2,
-        num_heads = 32,
-        vocab_size = VOCAB_SIZE, 
-        hidden_size = 256,
-        dropout = 0.0,  # TOCHECK
-        device = DEVICE,
-    )
+def complete_run(
+    model_function,
+    model_config,
     
-    nop = 0
+):
+    model = model_function(**model_config)
 
+
+
+if __name__ == "__main__":
+
+    model_config = {
+        "num_layers" : 2,
+        "num_heads" : 32,
+        "vocab_size" : VOCAB_SIZE, 
+        "hidden_size" : 256,
+        "dropout" : 0.0, 
+        "device" : DEVICE,
+    }
+    
+    complete_run(get_transformer, model_config)
+    input("My input")
+
+    nop = 0
     def list_prod(L):
         ans = 1
         for l in L:
             ans *= l
         return ans
-
     for p in model.parameters():
         nop += list_prod(p.shape)        
     print(nop, "NUMBER OF PARAMETERS")  
