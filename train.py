@@ -136,7 +136,7 @@ if __name__ == "__main__":
         run_config["model_config"] = model_config
         run_config["run_name"] = f"{num_heads} heads"
         run_config["save_models"] = True
-        run_config["epochs"] = 10
+        run_config["epochs"] = 1000
 
         complete_run(**run_config)
 
