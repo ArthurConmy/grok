@@ -127,7 +127,7 @@ def complete_run(
 if __name__ == "__main__":    
     wandb.init(project=f"Arthur's Grok", reinit=True)
 
-    for num_heads in [128, 4, 8, 64, 128]:
+    for num_heads in [128, 32, 128, 32, 128]:
         model_config = dict(DEFAULT_MODEL_CONFIG)
         model_config["num_heads"] = num_heads
 
@@ -137,8 +137,6 @@ if __name__ == "__main__":
         run_config["save_models"] = True
 
         complete_run(**run_config)
-        break
-
     A = ArithmeticTokenizer()
     # tens = t.range(start=0, end=120).float()
     # print(A.decode(tens))

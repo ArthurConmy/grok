@@ -6,7 +6,7 @@ from train import MINI_BATCH_SIZE, DEVICE
 from utils import get_percent_and_loss
 
 transformer = get_transformer(**DEFAULT_MODEL_CONFIG)
-transformer.load_state_dict(t.load("fi_90.pt", map_location=t.device("cpu")))
+transformer.load_state_dict(t.load("new_90.pt", map_location=t.device("cpu")))
 
 for _ in range(10):
     train_data, valid_data = get_the_data(
