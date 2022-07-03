@@ -13,6 +13,7 @@ DEVICE = "cuda" if t.cuda.is_available() else "cpu"
 MINI_BATCH_SIZE = 512
 
 def complete_run(
+    project_name,
     run_name,
     model_function,
     model_config,
@@ -27,6 +28,7 @@ def complete_run(
     if "device" in model_config:
         assert model_config["device"] == device, f"{model_config['device']} != {device}"
 
+    wandb.init(project=project_name, reinit=True)
     wandb.run.name = run_name
     print(f"Starting run {run_name}")
 
@@ -39,7 +41,7 @@ def complete_run(
     sched = t.optim.swa_utils.SWALR(opt, anneal_strategy="linear", anneal_epochs=100, swa_lr=0.0001)
     is_greater_than_ninety = False
 
-    for epoch_no in tqdm(range(1000)):
+    for epoch_no in tqdm(range(no_epochs)):
         train_data, valid_data = get_the_data(
             operator = operator,
             train_proportion = train_proportion,
@@ -87,6 +89,7 @@ def complete_run(
             "lr" : lr,
         }
         wandb.log(wandb_dict)
+    wandb.run.finish()
 
 if __name__ == "__main__":
     
@@ -100,6 +103,7 @@ if __name__ == "__main__":
     }
        
     default_run_config = {
+        "project_name" : "Arthur's Grok",
         "run_name" : f"Run at {safe_dtime()}",
         "model_function" : get_transformer,
         "model_config" : default_model_config,
@@ -109,10 +113,10 @@ if __name__ == "__main__":
         "mini_batch_size" : MINI_BATCH_SIZE,
         "lr" : 0.0005,
         "weight_decay" : 1,
-        "no_epochs" : 1000,
+        "no_epochs" : 5,
     }
 
-    wandb.init(project=f"Arthur's Grok")
+    wandb.init(project=f"Arthur's Grok", reinit=True)
 
     for num_heads in [4, 8, 32, 64, 128]:
         model_config = dict(default_model_config)
