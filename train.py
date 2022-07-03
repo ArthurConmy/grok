@@ -11,6 +11,27 @@ from utils import get_validation_data, get_no_parameters, VOCAB_SIZE, safe_dtime
 
 DEVICE = "cuda" if t.cuda.is_available() else "cpu"
 MINI_BATCH_SIZE = 512
+DEFAULT_MODEL_CONFIG = {
+    "num_layers" : 2,
+    "num_heads" : 32,
+    "vocab_size" : VOCAB_SIZE, 
+    "hidden_size" : 256,
+    "dropout" : 0.0, 
+    "device" : DEVICE,
+}
+DEFAULT_RUN_CONFIG = {
+    "project_name" : "Arthur's Grok",
+    "run_name" : f"Run at {safe_dtime()}",
+    "model_function" : get_transformer,
+    "model_config" : DEFAULT_MODEL_CONFIG,
+    "operator" : "+",
+    "train_proportion" : 0.75,    
+    "device" : DEVICE,
+    "mini_batch_size" : MINI_BATCH_SIZE,
+    "lr" : 0.0005,
+    "weight_decay" : 1,
+    "no_epochs" : 1000,
+}
 
 def complete_run(
     project_name,
@@ -35,6 +56,9 @@ def complete_run(
 
     model = model_function(**model_config)
     get_no_parameters(model)
+
+    t.save(model.state_dict(), "my_random_model_4.pt")
+    print("Saved!")
 
     cross_entropy_loss = t.nn.CrossEntropyLoss()
     opt = t.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay) 
@@ -93,38 +117,14 @@ def complete_run(
     wandb.run.name = run_name + " that took " + str(int(perf_counter() - initial_time))
     wandb.run.finish()
 
-if __name__ == "__main__":
-    
-    default_model_config = {
-        "num_layers" : 2,
-        "num_heads" : 32,
-        "vocab_size" : VOCAB_SIZE, 
-        "hidden_size" : 256,
-        "dropout" : 0.0, 
-        "device" : DEVICE,
-    }
-       
-    default_run_config = {
-        "project_name" : "Arthur's Grok",
-        "run_name" : f"Run at {safe_dtime()}",
-        "model_function" : get_transformer,
-        "model_config" : default_model_config,
-        "operator" : "+",
-        "train_proportion" : 0.75,    
-        "device" : DEVICE,
-        "mini_batch_size" : MINI_BATCH_SIZE,
-        "lr" : 0.0005,
-        "weight_decay" : 1,
-        "no_epochs" : 1000,
-    }
-
+if __name__ == "__main__":    
     wandb.init(project=f"Arthur's Grok", reinit=True)
 
     for num_heads in [4, 8, 32, 64, 128]:
-        model_config = dict(default_model_config)
+        model_config = dict(DEFAULT_MODEL_CONFIG)
         model_config["num_heads"] = num_heads
 
-        run_config = dict(default_run_config)
+        run_config = dict(DEFAULT_RUN_CONFIG)
         run_config["model_config"] = model_config
         run_config["run_name"] = f"{num_heads} heads"
 

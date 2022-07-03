@@ -142,7 +142,7 @@ class PositionalEncoding(t.nn.Module):
             x = x + self.pe[:x.size(0)]
         return self.dropout(x)
 
-class _Transformer(t.nn.Module):
+class Transformer(t.nn.Module):
     def __init__(self, 
         num_layers, 
         num_heads, 
@@ -211,7 +211,7 @@ class _Transformer(t.nn.Module):
         return result
 
 def get_transformer(device, **kwargs):
-        return _Transformer(**kwargs).to(device)
+        return Transformer(**kwargs).to(device)
 
 class TransposedLinear(t.nn.Module):
     def __init__(self, model):
