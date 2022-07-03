@@ -59,10 +59,6 @@ def complete_run(
     model = model_function(**model_config)
     get_no_parameters(model)
 
-    save_name = f"first_greater_than_90" ## _{ctime()}.pt"
-    t.save(model.state_dict(), save_name)
-    input("Saved!!!")
-
     cross_entropy_loss = t.nn.CrossEntropyLoss()
     opt = t.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay) 
     
