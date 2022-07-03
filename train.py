@@ -31,6 +31,7 @@ DEFAULT_RUN_CONFIG = {
     "lr" : 0.0005,
     "weight_decay" : 1,
     "no_epochs" : 1000,
+    "save_models" : False,
 }
 
 def complete_run(
@@ -45,6 +46,7 @@ def complete_run(
     lr,
     weight_decay,
     no_epochs,
+    save_models,
 ):    
     if "device" in model_config:
         assert model_config["device"] == device, f"{model_config['device']} != {device}"
@@ -57,14 +59,16 @@ def complete_run(
     model = model_function(**model_config)
     get_no_parameters(model)
 
-    t.save(model.state_dict(), "my_random_model_4.pt")
-    print("Saved!")
+    save_name = f"first_greater_than_90" ## _{ctime()}.pt"
+    t.save(model.state_dict(), save_name)
+    input("Saved!!!")
 
     cross_entropy_loss = t.nn.CrossEntropyLoss()
     opt = t.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay) 
     
     sched = t.optim.swa_utils.SWALR(opt, anneal_strategy="linear", anneal_epochs=100, swa_lr=0.0001)
-    is_greater_than_ninety = False
+    train_is_greater = False
+    val_is_greater = False
 
     for epoch_no in tqdm(range(no_epochs)):
         train_data, valid_data = get_the_data(
@@ -97,15 +101,22 @@ def complete_run(
 
         training_percentage_correct = ( 100 * corrects.item() ) / total
 
-        if training_percentage_correct > 95 and not is_greater_than_ninety or is_greater_than_ninety:
-            is_greater_than_ninety = True
+        if training_percentage_correct > 95 and not train_is_greater or train_is_greater:
+
+            if not train_is_greater:
+                t.save(model.state_dict(), f"first_greater_than_90_{ctime()}.pt")
+
+            train_is_greater = True
             sched.step()
 
         for x, y in valid_data:
             validation_percent_correct, validation_loss = get_validation_data(model, x, y)
 
-        lr = sched.get_last_lr()[0]
+        if not val_is_greater and validation_percent_correct > 95:
+            # t.save("First val greater")
+            val_is_greater = True
 
+        lr = sched.get_last_lr()[0]
         wandb_dict = {
             "percentage_correct" : training_percentage_correct,
             "training_loss" : sum(losses) / len(losses),
@@ -120,15 +131,17 @@ def complete_run(
 if __name__ == "__main__":    
     wandb.init(project=f"Arthur's Grok", reinit=True)
 
-    for num_heads in [4, 8, 32, 64, 128]:
+    for num_heads in [32, 4, 8, 64, 128]:
         model_config = dict(DEFAULT_MODEL_CONFIG)
         model_config["num_heads"] = num_heads
 
         run_config = dict(DEFAULT_RUN_CONFIG)
         run_config["model_config"] = model_config
         run_config["run_name"] = f"{num_heads} heads"
+        run_config["save_models"] = True
 
         complete_run(**run_config)
+        break
 
     A = ArithmeticTokenizer()
     # tens = t.range(start=0, end=120).float()
