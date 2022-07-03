@@ -141,6 +141,7 @@ class ArithmeticDataset:
         operator: str,
         operand_length: Optional[int] = None,
         data_dir: str = DEFAULT_DATA_DIR,
+        shuffle: bool = False,
     ):
         """
         Creates training and validation datasets
@@ -154,7 +155,7 @@ class ArithmeticDataset:
         assert (0 < train_pct) and (train_pct < 100)
 
         ds_name = cls.get_dsname(operator, operand_length)
-        eqs = cls.make_data(operator, operand_length)
+        eqs = cls.make_data(operator, operand_length, shuffle = shuffle)
 
         train_rows, _ = cls.calc_split_len(train_pct, len(eqs))
 
@@ -488,6 +489,7 @@ def get_the_data(
     raw_train_data, raw_valid_data = ArithmeticDataset.splits(
         train_pct = 100 * train_proportion, 
         operator = operator,
+        shuffle = False,
     )
 
     train_data = ArithmeticIterator(

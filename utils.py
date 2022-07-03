@@ -23,7 +23,7 @@ def get_no_parameters(model):
 def safe_dtime():
     return str(ctime()).replace(":", ".")
 
-def get_validation_data(model, x, y):
+def get_percent_and_loss(model, x, y):
     with t.no_grad():
         logits = model(x).logits
         probabilities = F.softmax(logits, dim=1)

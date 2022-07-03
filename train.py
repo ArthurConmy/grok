@@ -7,7 +7,7 @@ from model.transformer import get_transformer, BabyTransformer
 from einops import rearrange
 from time import ctime, perf_counter
 import wandb
-from utils import get_validation_data, get_no_parameters, VOCAB_SIZE, safe_dtime
+from utils import get_percent_and_loss, get_no_parameters, VOCAB_SIZE, safe_dtime
 
 DEVICE = "cuda" if t.cuda.is_available() else "cpu"
 MINI_BATCH_SIZE = 512
@@ -100,17 +100,17 @@ def complete_run(
         if training_percentage_correct > 95 and not train_is_greater or train_is_greater:
 
             if not train_is_greater:
-                t.save(model.state_dict(), f"first_greater_than_90_{ctime()}.pt")
+                t.save(model.state_dict(), f"checkpoints/first_greater_than_90_{ctime()}.pt")
 
             train_is_greater = True
             sched.step()
 
         for x, y in valid_data:
-            validation_percent_correct, validation_loss = get_validation_data(model, x, y)
+            validation_percent_correct, validation_loss = get_percent_and_loss(model, x, y)
 
         if not val_is_greater and validation_percent_correct > 95:
-            # t.save("First val greater")
             val_is_greater = True
+            t.save(f"checkpoints/val_is_greater_{ctime()}.pt")
 
         lr = sched.get_last_lr()[0]
         wandb_dict = {
@@ -127,7 +127,7 @@ def complete_run(
 if __name__ == "__main__":    
     wandb.init(project=f"Arthur's Grok", reinit=True)
 
-    for num_heads in [32, 4, 8, 64, 128]:
+    for num_heads in [128, 4, 8, 64, 128]:
         model_config = dict(DEFAULT_MODEL_CONFIG)
         model_config["num_heads"] = num_heads
 
