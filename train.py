@@ -131,8 +131,9 @@ def complete_run(
 
             y_one_hot = F.one_hot(y, num_classes=VOCAB_SIZE).float()
             probs = probabilities.detach().clone().cpu()
-            print("Devices:", probs.device, y.device)
-            corrects += t.sum((t.argmax(probs, dim=1) == y.detach().clone().cpu()).float())
+            y2 = y.detach().clone().cpu()
+            print("Devices:", probs.device, y2.device)
+            corrects += t.sum((t.argmax(probs, dim=1) == y2).float())
             total += min(probabilities.shape[0], y.shape[0])
 
             loss = cross_entropy_loss(probabilities, y_one_hot)
