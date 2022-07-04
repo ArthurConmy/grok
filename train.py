@@ -39,6 +39,7 @@ DEFAULT_RUN_CONFIG = {
 }
 MLP_MODEL_CONFIG = {
     "vocab_size" : VOCAB_SIZE,
+    "device" : DEVICE,
 }
 MLP_RUN_CONFIG = dict(DEFAULT_RUN_CONFIG)
 MLP_RUN_CONFIG["run_name"] = f"MLP at {safe_dtime()}"
@@ -132,8 +133,8 @@ def complete_run(
             y_one_hot = F.one_hot(y, num_classes=VOCAB_SIZE).float()
             probs = probabilities.detach().clone().cpu()
             y2 = y.detach().clone().cpu()
-            print("Devices:", probs.device, y2.device)
-            corrects += t.sum((t.argmax(probs, dim=1) == y2).float())
+            # print("Devices:", probs.device, y2.device)
+            corrects += t.sum((t.argmax(probs, dim=1) == y2).float()).item()
             total += min(probabilities.shape[0], y.shape[0])
 
             loss = cross_entropy_loss(probabilities, y_one_hot)
