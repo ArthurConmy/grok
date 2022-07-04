@@ -2,12 +2,12 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import torch as t
 import torch.nn.functional as F
-from dataset.data import ArithmeticDataset, ArithmeticTokenizer, ArithmeticIterator, get_the_data, get_metrics
+from dataset.data import ArithmeticDataset, ArithmeticTokenizer, ArithmeticIterator, get_the_data
 from model.transformer import get_transformer, BabyTransformer
 from einops import rearrange
 from time import ctime, perf_counter, strftime
 import wandb
-from utils import get_percent_and_loss, get_no_parameters, num_time, safe_dtime
+from utils import get_no_parameters, num_time, safe_dtime
 
 VOCAB_SIZE = 119
 PROJECT_NAME = "Arthur's Grok 3"
@@ -35,6 +35,43 @@ DEFAULT_RUN_CONFIG = {
     "epochs" : 1000,
     "save_models" : False,
 }
+
+def get_percent_and_loss(model, x, y):
+    with t.no_grad():
+        logits = model(x).logits
+        probabilities = F.softmax(logits, dim=1)
+    
+        y_one_hot = F.one_hot(y, num_classes=VOCAB_SIZE).float()
+        corrects = t.sum((t.argmax(probabilities, dim=1) == y).float())
+
+        cross_entropy_loss = t.nn.CrossEntropyLoss()
+        loss = cross_entropy_loss(probabilities, y_one_hot)
+
+        assert probabilities.shape[0] == y.shape[0]
+        return corrects / probabilities.shape[0], loss
+
+def get_metrics(model, operator, train_proportion, device):
+    train_data, valid_data = get_the_data(
+        operator = operator,
+        train_proportion = train_proportion,
+        mini_batch_size = -1,
+        device = device,
+    )
+
+    stored_x = None
+    first = True
+
+    for x, y in train_data:
+        train_prop, train_loss = get_percent_and_loss(model, x, y)
+        assert first
+        first = False
+        stored_x = x.clone()
+
+    for x, y in valid_data:
+        valid_prop, valid_loss = get_percent_and_loss(model, x, y)
+
+    return train_prop, train_loss, valid_prop, valid_loss
+
 
 def complete_run(
     project_name,
@@ -135,7 +172,7 @@ if __name__ == "__main__":
 
         run_config = dict(DEFAULT_RUN_CONFIG)
         run_config["model_config"] = model_config
-        run_config["run_name"] = f"{num_heads} heads at {num_time()}"
+        run_config["run_name"] = f"32 heads at {num_time()}"
         run_config["save_models"] = True
         run_config["epochs"] = 1000
 
