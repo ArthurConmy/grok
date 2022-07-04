@@ -39,6 +39,7 @@ DEFAULT_RUN_CONFIG = {
 }
 MLP_MODEL_CONFIG = {
     "vocab_size" : VOCAB_SIZE,
+    "d" : 100,
     "device" : DEVICE,
 }
 MLP_RUN_CONFIG = dict(DEFAULT_RUN_CONFIG)
