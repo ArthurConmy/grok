@@ -169,7 +169,7 @@ def complete_run(
 if __name__ == "__main__":    
     for it_no in range(20):
         model_config = dict(DEFAULT_MODEL_CONFIG)
-        model_config["num_heads"] = 32
+        model_config["num_heads"] = 128
         model_config["seed"] = it_no
 
         run_config = dict(DEFAULT_RUN_CONFIG)

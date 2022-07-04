@@ -122,9 +122,10 @@ class ArithmeticTokenizer:
     @classmethod
     def get_tokens(cls):
         tokens = (
-            [EOS_TOKEN, EQ_TOKEN]
+            list(map(render, NUMS))
+            + [EOS_TOKEN, EQ_TOKEN]
             + list(sorted(list(VALID_OPERATORS.keys())))
-            + list(map(render, NUMS))
+            # + list(map(render, NUMS))
             + list(map(render, itertools.permutations(range(5))))  # s5
         )
         return tokens
