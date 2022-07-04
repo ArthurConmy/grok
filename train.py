@@ -86,7 +86,7 @@ def complete_run(
     lr,
     weight_decay,
     epochs,
-    save_mode,
+    save_models,
 ):    
     if "device" in model_config:
         assert model_config["device"] == device, f"{model_config['device']} != {device}"
@@ -145,14 +145,14 @@ def complete_run(
 
         if train_prop > 0.95 and not train_is_greater: 
             train_is_greater = True
-            if save_mode == 1:
+            if save_models == 1:
                 t.save(model.state_dict(), f"checkpoints/train_90_{num_time()}.pt")
         if train_is_greater:
             sched.step()
 
         if valid_prop > 0.8 and not val_is_greater:
             val_is_greater = True
-            if save_mode == 1:
+            if save_models == 1:
                 t.save(model.state_dict(), f"checkpoints/valid_90_{num_time()}.pt")
 
         lr = sched.get_last_lr()[0]
@@ -165,7 +165,7 @@ def complete_run(
         }
         wandb.log(wandb_dict)
 
-        if type(save_mode) == type([]) and epoch_no in save_mode:
+        if type(save_models) == type([]) and epoch_no in save_models:
             t.save(model.state_dict(), f"checkpoints/seed1at{epoch_no}.pt")
 
     wandb.run.name = run_name + " that took " + str(int(perf_counter() - initial_time))
@@ -184,7 +184,7 @@ if __name__ == "__main__":
         run_config["run_name"] = f"{model_config['num_heads']} heads at {num_time()}"
         run_config["save_models"] = True
         run_config["epochs"] = 1000
-        run_config["save_mode"] = [0, 30, 60, 90, 120, 150, 400, 700, 850, 880, 910, 940, 970, 999]
+        run_config["save_models"] = [0, 30, 60, 90, 120, 150, 400, 700, 850, 880, 910, 940, 970, 999]
 
         complete_run(**run_config)
         break
