@@ -533,6 +533,15 @@ def get_metrics(model, operator, train_proportion, device):
 
     return train_prop, train_loss, valid_prop, valid_loss
 
+# def get_all_training_data(operator, train_proportion, ):
+    train_data, valid_data = get_the_data(
+        operator = operator,
+        train_proportion = train_proportion,
+        mini_batch_size = -1,
+        device = device,
+    )
+
+
 if __name__ == "__main__":
     print("Hello, data.py!")
     a, b = ArithmeticDataset.splits(

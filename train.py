@@ -7,8 +7,9 @@ from model.transformer import get_transformer, BabyTransformer
 from einops import rearrange
 from time import ctime, perf_counter, strftime
 import wandb
-from utils import get_percent_and_loss, get_no_parameters, VOCAB_SIZE, num_time, safe_dtime
+from utils import get_percent_and_loss, get_no_parameters, num_time, safe_dtime
 
+VOCAB_SIZE = 119
 PROJECT_NAME = "Arthur's Grok 3"
 DEVICE = "cuda" if t.cuda.is_available() else "cpu"
 MINI_BATCH_SIZE = 512
@@ -26,7 +27,7 @@ DEFAULT_RUN_CONFIG = {
     "model_function" : get_transformer,
     "model_config" : DEFAULT_MODEL_CONFIG,
     "operator" : "+",
-    "train_proportion" : 0.75,    
+    "train_proportion" : 0.05,    
     "device" : DEVICE,
     "mini_batch_size" : MINI_BATCH_SIZE,
     "lr" : 0.0005,
@@ -128,22 +129,21 @@ def complete_run(
     wandb.run.finish()
 
 if __name__ == "__main__":    
-    for num_heads in [128]:
+    for _ in range(20):
         model_config = dict(DEFAULT_MODEL_CONFIG)
-        model_config["num_heads"] = num_heads
+        model_config["num_heads"] = 32
 
         run_config = dict(DEFAULT_RUN_CONFIG)
         run_config["model_config"] = model_config
-        run_config["run_name"] = f"{num_heads} heads"
+        run_config["run_name"] = f"{num_heads} heads at {num_time()}"
         run_config["save_models"] = True
         run_config["epochs"] = 1000
 
         complete_run(**run_config)
 
     A = ArithmeticTokenizer()
-    # tens = t.range(start=0, end=120).float()
+    # tens = t.range(start=0, end=120).float() ## 22 is 0 !!!
     # print(A.decode(tens))
-    # print() # TODO randomize the symbols; they're not REALLY the indistinguished things
-    # input()
+    # print()
     # string = str(ctime()).replace(":", ".")
     # print(string)

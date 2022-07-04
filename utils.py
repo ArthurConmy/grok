@@ -1,7 +1,6 @@
 import torch as t
 import torch.nn.functional as F
 from time import ctime, strftime
-VOCAB_SIZE = 119
 
 def list_prod(L):
     ans = 1
