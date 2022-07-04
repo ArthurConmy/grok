@@ -13,7 +13,7 @@ class MLP(t.nn.Module):
     def __init__(self, vocab_size, d, device):
         super().__init__()
         self.module_list = t.nn.ModuleList([
-            Embedding1D(vocab_size),
+            Embedding1D(d, vocab_size),
             t.nn.ReLU(),
             t.nn.Linear(d, 2000),
             t.nn.ReLU(),
