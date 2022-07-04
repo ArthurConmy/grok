@@ -142,7 +142,7 @@ def complete_run(
             loss.backward()
             opt.step()
 
-        training_percentage_correct = ( 100 * corrects.item() ) / total
+        training_percentage_correct = (100 * corrects) / total
 
         # if training_percentage_correct>90 and not train_is_greater or train_is_greater:
         #     train_is_greater = True
