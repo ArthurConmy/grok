@@ -174,7 +174,7 @@ if __name__ == "__main__":
 
         run_config = dict(DEFAULT_RUN_CONFIG)
         run_config["model_config"] = model_config
-        run_config["run_name"] = f"32 heads at {num_time()}"
+        run_config["run_name"] = f"{model_config['num_heads']} heads at {num_time()}"
         run_config["save_models"] = True
         run_config["epochs"] = 1000
 
