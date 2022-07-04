@@ -10,9 +10,9 @@ from einops import repeat, rearrange
 OFFSET = 22
 
 my_model_config = dict(DEFAULT_MODEL_CONFIG)
-my_model_config["num_heads"] = 128
+my_model_config["num_heads"] = 32
 model = get_transformer(**my_model_config)
-model.load_state_dict(t.load("checkpoints/new_trained.pt", map_location=t.device("cpu")))
+model.load_state_dict(t.load("checkpoints/32_valid.pt", map_location=t.device("cpu")))
 
 raw_range = t.arange(97)
 first_operand = repeat(raw_range, "a -> (a a2)", a2=97).unsqueeze(1)
@@ -22,7 +22,7 @@ answers = F.one_hot((t.sum(all_x, dim=1) % 97), num_classes=VOCAB_SIZE)
 
 logits = model(all_x).logits.detach().clone()
 probs = F.softmax(logits, dim=1)
-maxes = F.one_hot(t.argmax(logits, dim=1))
+maxes = F.one_hot(t.argmax(logits, dim=1), num_classes=VOCAB_SIZE)
 
 correct_probs = t.sum(probs * answers, dim=1) 
 prob_matrix = rearrange(correct_probs, "(a b) -> a b", a=97, b=97)
@@ -34,13 +34,14 @@ prob_matrix = rearrange(correct_probs, "(a b) -> a b", a=97, b=97)
 correct_maxes = t.sum(maxes * answers, dim=1)
 correct_matrix = rearrange(correct_maxes, "(a b) -> a b", a=97, b=97)
 
-train_prop, train_loss, valid_prop, valid_loss = get_metrics(model=model, operator="+", train_proportion=0.5, device=DEVICE)
+train_prop, train_loss, valid_prop, valid_loss = get_metrics(model=model, operator="+", train_proportion=0.75, device=DEVICE)
 train_data, valid_data = get_the_data(
     operator = "+",
-    train_proportion = 0.5,
+    train_proportion = 0.75,
     mini_batch_size = -1,
     device = DEVICE,
 )
+print("Train prop", train_prop, valid_prop)
 for x, y in train_data:
     indices = 97 * (x[:,0]) + x[:,1]
     print(x)
@@ -66,7 +67,11 @@ m = rearrange(m, "(a b c) -> (a b) c", a=97, b=97, c=97)
 # plt.show()
 
 ax = seaborn.heatmap(correct_matrix, annot=False, cmap="Blues")
+# ax = seaborn.heatmap(t_data_matrix, annot=False, cmap="Blues")
 plt.show()
+
+# ax = seaborn.heatmap(t_data_matrix, annot=False, cmap="Blues")
+# plt.show()
 
 # tensor([[66, 47],
 #         [96, 82],
