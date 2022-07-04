@@ -52,6 +52,10 @@ class AttentionHeads(t.nn.Module):
         q = rearrange(q, 'b s (n h) -> b n s h', n=self.num_heads)
         k = rearrange(k, 'b s (n h) -> b n s h', n=self.num_heads)
         v = rearrange(v, 'b s (n h) -> b n s h', n=self.num_heads)
+        # print(q[:,0,:,:])
+        # print("and")
+        # print(q[:,1,:,:])
+
         qk = t.einsum('bnil,bnjl->bnij', q, k)
         qk /= self.head_size**0.5
         qk = t.tril(qk)
@@ -64,6 +68,26 @@ class AttentionHeads(t.nn.Module):
         combined = t.einsum('bnij,bnjh->bnih', qk, v)
         combined = rearrange(combined, 'b n i h -> b i (n h)')
         return self.output_proj(combined)    
+
+    def zero_out(self, indices):
+        """
+        zero out some of the attention heads
+        """
+
+        # s (n h)*3
+        self.attention.requires_grad = False
+        self.attention.weight.requires_grad = False
+        qr, kr, vr = t.split(self.attention.weight, self.hidden_size, dim=0)
+        print(qr.shape, kr.shape, vr.shape)
+        # input("Pausing")
+
+        for m in [qr, kr, vr]:
+            # m.requires_grad = False
+            m = rearrange(m, "(n h) d -> n h d", n=self.num_heads, h=self.head_size, d=self.hidden_size) # num of heads x head size (q vectors dimension) x hidden size 
+            m[indices,:,:] = 0.0
+            m = rearrange(m, "n h d -> (n h) d", n=self.num_heads, h=self.head_size, d=self.hidden_size)
+
+        self.attention.weight = t.nn.Parameter(t.cat((qr, kr, vr), dim=0))
 
 class TransformerBlock(t.nn.Module):
     def __init__(

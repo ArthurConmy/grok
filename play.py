@@ -22,12 +22,24 @@ def get_average_confidence(model, x):
 ct = []
 cv = []
 
-for model_file in tqdm(MODEL_FILES):
-    print(f"Model {model_file}")
+model_file = MODEL_FILES[5]
+
+# for model_file in tqdm(MODEL_FILES[5:]):
+for head in range(-1, 32):
+    # print(f"Model {model_file}")
     my_model_config = dict(DEFAULT_MODEL_CONFIG)
     my_model_config["num_heads"] = 32
     model = get_transformer(**my_model_config)
     model.load_state_dict(t.load(model_file, map_location=t.device("cpu")))
+    # a, b, c, d = get_metrics(model, operator="+", train_proportion=0.75, device=DEVICE)
+    # print(a, b, c, d)
+    if head != -1:
+        model.blocks[0].attention.zero_out([head])    
+    train_prop, b, c, d = get_metrics(model, operator="+", train_proportion=0.75, device=DEVICE)
+    print(train_prop.item(), end=" ")
+    if head != 31: continue
+    # print(a, b, c, d)
+    # input("Pausing")
 
     raw_range = t.arange(97)
     first_operand = repeat(raw_range, "a -> (a a2)", a2=97).unsqueeze(1)
@@ -45,13 +57,17 @@ for model_file in tqdm(MODEL_FILES):
     correct_maxes = t.sum(maxes * answers, dim=1)
     correct_matrix = rearrange(correct_maxes, "(a b) -> a b", a=97, b=97)
 
-    train_prop, train_loss, valid_prop, valid_loss = get_metrics(model=model, operator="+", train_proportion=0.75, device=DEVICE)
-    train_data, valid_data = get_the_data(
-        operator = "+",
-        train_proportion = 0.75,
-        mini_batch_size = -1,
-        device = DEVICE,
-    )
+    for _ in range(2):
+        train_prop, train_loss, valid_prop, valid_loss = get_metrics(model=model, operator="+", train_proportion=0.75, device=DEVICE)
+        train_data, valid_data = get_the_data(
+            operator = "+",
+            train_proportion = 0.75,
+            mini_batch_size = -1,
+            device = DEVICE,
+        )
+        print("Train loss: ", train_loss)
+        print(model)
+
     for x, y in train_data:
         indices = 97 * (x[:,0]) + x[:,1]
         ct.append(get_average_confidence(model, x))
