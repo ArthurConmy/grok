@@ -8,3 +8,4 @@ blobfile
 torchtyping
 wandb
 seaborn
+click

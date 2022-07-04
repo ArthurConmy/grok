@@ -46,19 +46,32 @@ class AttentionHeads(t.nn.Module):
         t.nn.init.xavier_uniform_(self.attention.weight, gain=1)
         t.nn.init.xavier_uniform_(self.output_proj.weight, gain=1)
 
+        self.zeroed = None
+
     def forward(self, x):
         qkv = self.attention(x)
         q, k, v = t.split(qkv, self.hidden_size, dim=-1)
         q = rearrange(q, 'b s (n h) -> b n s h', n=self.num_heads)
         k = rearrange(k, 'b s (n h) -> b n s h', n=self.num_heads)
         v = rearrange(v, 'b s (n h) -> b n s h', n=self.num_heads)
+
         # print(q[:,0,:,:])
         # print("and")
         # print(q[:,1,:,:])
 
+        if self.zeroed is not None: ## another way to zero out att heads...
+            for m in [q, k, v]:
+                m.requires_grad = False
+                m[:,self.zeroed,:,:] = 0
+            # assert t.allclose(n, t.zeros_like(n))
+            # cnt = t.sum(t.isclose(q, t.zeros_like(q)).int())
+            # print(cnt, t.flatten(q).shape[0])
+            # m /= prop
+
         qk = t.einsum('bnil,bnjl->bnij', q, k)
         qk /= self.head_size**0.5
         qk = t.tril(qk)
+
         # setting everything qk can't attend to
         qk[t.triu(t.ones_like(qk), diagonal=1).bool()] = -1e4
         qk = F.softmax(qk, dim=-1)
@@ -75,10 +88,11 @@ class AttentionHeads(t.nn.Module):
         """
 
         # s (n h)*3
+        self.zeroed = indices
         self.attention.requires_grad = False
         self.attention.weight.requires_grad = False
         qr, kr, vr = t.split(self.attention.weight, self.hidden_size, dim=0)
-        print(qr.shape, kr.shape, vr.shape)
+        # print(qr.shape, kr.shape, vr.shape)
         # input("Pausing")
 
         for m in [qr, kr, vr]:

@@ -1,3 +1,4 @@
+import numpy as np
 from tqdm import tqdm
 import torch as t
 import torch.nn.functional as F
@@ -22,9 +23,12 @@ def get_average_confidence(model, x):
 ct = []
 cv = []
 
-model_file = MODEL_FILES[5]
+model_file = MODEL_FILES[-1]
 
 # for model_file in tqdm(MODEL_FILES[5:]):
+
+ts = []
+
 for head in range(-1, 32):
     # print(f"Model {model_file}")
     my_model_config = dict(DEFAULT_MODEL_CONFIG)
@@ -34,10 +38,18 @@ for head in range(-1, 32):
     # a, b, c, d = get_metrics(model, operator="+", train_proportion=0.75, device=DEVICE)
     # print(a, b, c, d)
     if head != -1:
-        model.blocks[0].attention.zero_out([head])    
+        model.blocks[1].attention.zero_out([0, 25, 17, 4]) ## np.asarray([20, 30, 1, 12]) - 1) 
+        # 0.8011903166770935
     train_prop, b, c, d = get_metrics(model, operator="+", train_proportion=0.75, device=DEVICE)
-    print(train_prop.item(), end=" ")
+    
+    curt = train_prop.item()
+    ts.append(curt)
+    print(curt)
+
     if head != 31: continue
+
+    input("All done")
+
     # print(a, b, c, d)
     # input("Pausing")
 

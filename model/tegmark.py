@@ -1,0 +1,26 @@
+import torch as t
+
+class Embedding1D(t.nn.Module):
+    def __init__(self, vocab_size):
+        self.embeddings = t.nn.Parameter(t.randn(vocab_size, 1))
+
+    def forward(self, x):
+        return self.embeddings[x[:, 0]] + self.embeddings[x[:, 1]]
+
+class MLP(t.nn.Module):
+    def __init__(self, vocab_size):
+        super().__init__()
+        self.modules = t.nn.ModuleList([
+            Embedding1D(vocab_size),
+            t.nn.ReLU(),
+            t.nn.Linear(1, 200),
+            t.nn.ReLU(),
+            t.nn.Linear(200, 200),
+            t.nn.ReLU(),
+            t.nn.Linear(200, 30),
+            t.nn.ReLU(),
+            t.nn.Linear(30, vocab_size),
+        ])
+
+    def forward(self, x):
+        return self.modules(x)

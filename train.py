@@ -59,14 +59,8 @@ def get_metrics(model, operator, train_proportion, device):
         device = device,
     )
 
-    stored_x = None
-    first = True
-
     for x, y in train_data:
         train_prop, train_loss = get_percent_and_loss(model, x, y)
-        assert first
-        first = False
-        stored_x = x.clone()
 
     for x, y in valid_data:
         valid_prop, valid_loss = get_percent_and_loss(model, x, y)
