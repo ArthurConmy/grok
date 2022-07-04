@@ -10,7 +10,7 @@ class Embedding1D(t.nn.Module):
         return self.embeddings[x[:, 0]] + self.embeddings[x[:, 1]]
 
 class MLP(t.nn.Module):
-    def __init__(self, vocab_size):
+    def __init__(self, vocab_size, device):
         super().__init__()
         self.module_list = t.nn.ModuleList([
             Embedding1D(vocab_size),
@@ -22,7 +22,7 @@ class MLP(t.nn.Module):
             t.nn.Linear(2000, 300),
             t.nn.ReLU(),
             t.nn.Linear(300, vocab_size),
-        ])
+        ]).to(device)
 
     def forward(self, x):
         output = x
