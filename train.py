@@ -28,7 +28,7 @@ DEFAULT_RUN_CONFIG = {
     "model_function" : get_transformer,
     "model_config" : DEFAULT_MODEL_CONFIG,
     "operator" : "+",
-    "train_proportion" : 0.5,    
+    "train_proportion" : 0.75,    
     "device" : DEVICE,
     "mini_batch_size" : MINI_BATCH_SIZE,
     "lr" : 0.0005,
