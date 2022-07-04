@@ -182,7 +182,7 @@ if __name__ == "__main__":
 
     A = ArithmeticTokenizer()
     
-    # tens = t.range(start=0, end=120).float() ## 22 is 0 !!!
+    # tens = t.range(start=0, end=120).float() ## 22 is not 0 !!!
     # print(A.decode(tens))
     # print()
     # string = str(ctime()).replace(":", ".")
