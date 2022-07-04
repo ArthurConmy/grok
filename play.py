@@ -44,10 +44,12 @@ train_data, valid_data = get_the_data(
 print("Train prop", train_prop, valid_prop)
 for x, y in train_data:
     indices = 97 * (x[:,0]) + x[:,1]
-    print(x)
-    print(y)
-    print("Model")
-    print(t.argmax(model(x).logits, dim=1))
+
+    logits = model(x).logits
+    probs = F.softmax(logits, dim=1)
+    max_probs = t.max(probs, dim=1).values
+    print(t.sum(max_probs) / max_probs.shape[0])
+
 is_tdata = t.zeros(97 * 97).int()
 write_data = t.ones_like(indices).int()
 is_tdata.scatter_(0, indices, write_data)

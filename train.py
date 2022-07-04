@@ -167,7 +167,7 @@ def complete_run(
     wandb.run.finish()
 
 if __name__ == "__main__":    
-    for it_no in range(20):
+    for it_no in range(1, 20):
         model_config = dict(DEFAULT_MODEL_CONFIG)
         model_config["num_heads"] = 128
         model_config["seed"] = it_no
