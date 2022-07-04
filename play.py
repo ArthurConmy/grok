@@ -13,16 +13,6 @@ OFFSET = 22
 SAVED_MODELS = [0, 30, 60, 90, 120, 150, 400, 700, 850, 880, 910, 940, 970, 999]
 MODEL_FILES = [f"checkpoints/seed1at{saved_model}.pt" for saved_model in SAVED_MODELS]
 
-def get_average_confidence(model, x):
-    with t.no_grad():
-        logits = model(x).logits
-        probs = F.softmax(logits, dim=1)
-        max_probs = t.max(probs, dim=1).values
-        return t.sum(max_probs).item() / max_probs.shape[0]
-
-ct = []
-cv = []
-
 model_file = MODEL_FILES[-1]
 
 # for model_file in tqdm(MODEL_FILES[5:]):

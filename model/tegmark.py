@@ -1,7 +1,9 @@
 import torch as t
+from model.transformer import GPT2Output
 
 class Embedding1D(t.nn.Module):
     def __init__(self, vocab_size):
+        super().__init__()
         self.embeddings = t.nn.Parameter(t.randn(vocab_size, 1))
 
     def forward(self, x):
@@ -10,17 +12,20 @@ class Embedding1D(t.nn.Module):
 class MLP(t.nn.Module):
     def __init__(self, vocab_size):
         super().__init__()
-        self.modules = t.nn.ModuleList([
+        self.module_list = t.nn.ModuleList([
             Embedding1D(vocab_size),
             t.nn.ReLU(),
-            t.nn.Linear(1, 200),
+            t.nn.Linear(1, 2000),
             t.nn.ReLU(),
-            t.nn.Linear(200, 200),
+            t.nn.Linear(2000, 2000),
             t.nn.ReLU(),
-            t.nn.Linear(200, 30),
+            t.nn.Linear(2000, 300),
             t.nn.ReLU(),
-            t.nn.Linear(30, vocab_size),
+            t.nn.Linear(300, vocab_size),
         ])
 
     def forward(self, x):
-        return self.modules(x)
+        output = x
+        for module in self.module_list:
+            output = module(output)
+        return GPT2Output(output, t.zeros_like(output))

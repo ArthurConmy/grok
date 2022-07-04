@@ -4,6 +4,7 @@ import torch as t
 import torch.nn.functional as F
 from dataset.data import ArithmeticDataset, ArithmeticTokenizer, ArithmeticIterator, get_the_data
 from model.transformer import get_transformer, BabyTransformer
+from model.tegmark import MLP
 from einops import rearrange
 from time import ctime, perf_counter, strftime
 import wandb
@@ -36,6 +37,14 @@ DEFAULT_RUN_CONFIG = {
     "epochs" : 1000,
     "save_models" : False,
 }
+MLP_MODEL_CONFIG = {
+    "vocab_size" : VOCAB_SIZE,
+}
+MLP_RUN_CONFIG = dict(DEFAULT_RUN_CONFIG)
+MLP_RUN_CONFIG["run_name"] = f"MLP at {safe_dtime()}"
+MLP_RUN_CONFIG["model_function"] = MLP
+MLP_RUN_CONFIG["model_config"] = MLP_MODEL_CONFIG
+MLP_RUN_CONFIG["lr"] = 0.0005
 
 def get_percent_and_loss(model, x, y):
     with t.no_grad():
@@ -67,7 +76,6 @@ def get_metrics(model, operator, train_proportion, device):
 
     return train_prop, train_loss, valid_prop, valid_loss
 
-
 def complete_run(
     project_name,
     run_name,
@@ -92,6 +100,7 @@ def complete_run(
 
     model = model_function(**model_config)
     get_no_parameters(model)
+    print(model)
 
     cross_entropy_loss = t.nn.CrossEntropyLoss()
     opt = t.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay) 
@@ -166,6 +175,12 @@ def complete_run(
     wandb.run.finish()
 
 if __name__ == "__main__":    
+    model_config = dict(MLP_MODEL_CONFIG)
+    run_config = dict(MLP_RUN_CONFIG)
+    print(run_config)
+    complete_run(**run_config)
+    input("Done")
+
     for it_no in range(1, 20):
         model_config = dict(DEFAULT_MODEL_CONFIG)
         model_config["num_heads"] = 128
