@@ -7,3 +7,4 @@ mod
 blobfile
 torchtyping
 wandb
+seaborn

@@ -148,10 +148,11 @@ class Transformer(t.nn.Module):
         num_heads, 
         vocab_size, 
         hidden_size,
-        dropout, 
+        dropout,
+        seed, 
     ):
         super().__init__()
-        t.manual_seed(0) 
+        t.manual_seed(seed) 
         self.vocab_size = vocab_size
         self.token_embedding = t.nn.Embedding(vocab_size, hidden_size) ## t.nn.Parameter(t.randn(vocab_size, hidden_size))
         self.position_embedding = PositionalEncoding(hidden_size, dropout-dropout, max_len=2, batch_first=True) ## t.nn.Parameter(t.randn(3, hidden_size)) # max position embeddings
@@ -180,7 +181,7 @@ class Transformer(t.nn.Module):
     def forward(
         self, 
         input_ids
-        ): # [batch, seq_len]
+    ): # [batch, seq_len]
         seq_len = input_ids.shape[1]
         # result = self.token_embedding(input_ids) + self.position_embedding[t.arange(seq_len)]
         result = self.position_embedding(self.token_embedding(input_ids))

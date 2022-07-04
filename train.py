@@ -20,6 +20,7 @@ DEFAULT_MODEL_CONFIG = {
     "hidden_size" : 256,
     "dropout" : 0.0, 
     "device" : DEVICE,
+    "seed" : 0,
 }
 DEFAULT_RUN_CONFIG = {
     "project_name" : PROJECT_NAME,
@@ -27,7 +28,7 @@ DEFAULT_RUN_CONFIG = {
     "model_function" : get_transformer,
     "model_config" : DEFAULT_MODEL_CONFIG,
     "operator" : "+",
-    "train_proportion" : 0.05,    
+    "train_proportion" : 0.5,    
     "device" : DEVICE,
     "mini_batch_size" : MINI_BATCH_SIZE,
     "lr" : 0.0005,
@@ -166,9 +167,10 @@ def complete_run(
     wandb.run.finish()
 
 if __name__ == "__main__":    
-    for _ in range(20):
+    for it_no in range(20):
         model_config = dict(DEFAULT_MODEL_CONFIG)
         model_config["num_heads"] = 32
+        model_config["seed"] = it_no
 
         run_config = dict(DEFAULT_RUN_CONFIG)
         run_config["model_config"] = model_config
@@ -179,6 +181,7 @@ if __name__ == "__main__":
         complete_run(**run_config)
 
     A = ArithmeticTokenizer()
+    
     # tens = t.range(start=0, end=120).float() ## 22 is 0 !!!
     # print(A.decode(tens))
     # print()
