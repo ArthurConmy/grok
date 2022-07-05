@@ -250,7 +250,7 @@ class Transformer(t.nn.Module):
         return result
 
 def get_transformer(device, **kwargs):
-        return Transformer(**kwargs).to(device)
+    return Transformer(**kwargs).to(device)
 
 class TransposedLinear(t.nn.Module):
     def __init__(self, model):

@@ -1,3 +1,4 @@
+model_*.py
 seed1o.zip
 wandb/
 model/__pycache__/*
