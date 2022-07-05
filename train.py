@@ -180,11 +180,11 @@ def complete_run(
     wandb.run.finish()
 
 if __name__ == "__main__":    
-    model_config = dict(MLP_MODEL_CONFIG)
-    run_config = dict(MLP_RUN_CONFIG)
-    print(run_config)
-    complete_run(**run_config)
-    input("Done")
+    # model_config = dict(MLP_MODEL_CONFIG)
+    # run_config = dict(MLP_RUN_CONFIG)
+    # print(run_config)
+    # complete_run(**run_config)
+    # input("Done") # Tegmark stuff did not work
 
     for it_no in range(1, 20):
         model_config = dict(DEFAULT_MODEL_CONFIG)
