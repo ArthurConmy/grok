@@ -12,12 +12,12 @@ from einops import repeat, rearrange
 OFFSET = 22
 SAVED_MODELS = [0, 30, 60, 90, 120, 150, 400, 700, 850, 880, 910, 940, 970, 999]
 MODEL_FILES = [f"checkpoints/seed1at{saved_model}.pt" for saved_model in SAVED_MODELS]
-
 model_file = MODEL_FILES[-1]
-
-# for model_file in tqdm(MODEL_FILES[5:]):
-
 ts = []
+
+def print_values(self, inp, outp):
+    print("input", inp)
+    print("output", outp)
 
 for head in range(-1, 32):
     # print(f"Model {model_file}")
@@ -25,13 +25,16 @@ for head in range(-1, 32):
     my_model_config["num_heads"] = 32
     model = get_transformer(**my_model_config)
     model.load_state_dict(t.load(model_file, map_location=t.device("cpu")))
+    model.blocks[0].attention.attention.register_forward_hook(print_values)
+
     # a, b, c, d = get_metrics(model, operator="+", train_proportion=0.75, device=DEVICE)
     # print(a, b, c, d)
     if head != -1:
         model.blocks[1].attention.zero_out([0, 25, 17, 4]) ## np.asarray([20, 30, 1, 12]) - 1) 
         # 0.8011903166770935
     train_prop, b, c, d = get_metrics(model, operator="+", train_proportion=0.75, device=DEVICE)
-    
+    print("Got train prop")
+
     curt = train_prop.item()
     ts.append(curt)
     print(curt)
@@ -100,16 +103,3 @@ for head in range(-1, 32):
 
     # ax = seaborn.heatmap(t_data_matrix, annot=False, cmap="Blues")
     # plt.show()
-
-    # tensor([[66, 47],
-    #         [96, 82],
-    #         [41, 92],
-    #         ...,
-    #         [55, 82],
-    #         [46, 95],
-    #         [88, 42]])
-    # tensor([16, 81, 36,  ..., 40, 44, 33])
-
-plt.plot(list(range(len(ct))), ct)
-plt.plot(list(range(len(cv))), cv)
-plt.show()

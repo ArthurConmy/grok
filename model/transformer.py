@@ -32,6 +32,11 @@ class PositionalEncoding(t.nn.Module):
             x = x + self.pe[:x.size(0)]
         return self.dropout(x)
 
+# class Attention(t.nn.Module):
+    # def __init__(self, hidden_size, num_heads):
+    # def forward(self, x):
+        # return x
+
 class AttentionHeads(t.nn.Module):
     def __init__(self, hidden_size, num_heads):
         assert hidden_size % num_heads == 0
