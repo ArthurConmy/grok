@@ -32,11 +32,6 @@ class PositionalEncoding(t.nn.Module):
             x = x + self.pe[:x.size(0)]
         return self.dropout(x)
 
-# class Attention(t.nn.Module):
-    # def __init__(self, hidden_size, num_heads):
-    # def forward(self, x):
-        # return x
-
 class AttentionHeads(t.nn.Module):
     def __init__(self, hidden_size, num_heads):
         assert hidden_size % num_heads == 0
@@ -52,6 +47,7 @@ class AttentionHeads(t.nn.Module):
         t.nn.init.xavier_uniform_(self.output_proj.weight, gain=1)
 
         self.zeroed = None
+        self.last_att = None
 
     def forward(self, x):
         qkv = self.attention(x)
@@ -80,6 +76,10 @@ class AttentionHeads(t.nn.Module):
         # setting everything qk can't attend to
         qk[t.triu(t.ones_like(qk), diagonal=1).bool()] = -1e4
         qk = F.softmax(qk, dim=-1)
+        self.last_att = (qk.detach().clone())
+        print(qk)
+        print("Resetting!")
+
         # qk: batch num_heads seq_len seq_len
         # v: batch seq_len num_heads head_size
         # out: batch num_heads seq_len head_size
